@@ -42,7 +42,18 @@ def extract_text_from_image(
     # Try Windows native OCR first
     try:
         import winocr
-        res = winocr.recognize_cv2_sync(cv_img, lang=lang)
+        target_lang = lang
+        try:
+            avail_langs = [l.language_tag for l in winocr.OcrEngine.available_recognizer_languages]
+            if target_lang in avail_langs:
+                win_lang = target_lang
+            else:
+                matched = [l for l in avail_langs if l.lower().startswith(target_lang.lower())]
+                win_lang = matched[0] if matched else (avail_langs[0] if avail_langs else target_lang)
+        except Exception:
+            win_lang = target_lang
+
+        res = winocr.recognize_cv2_sync(cv_img, lang=win_lang)
         text = res.get("text", "").strip()
         return text
     except Exception as e:

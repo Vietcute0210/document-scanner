@@ -2,7 +2,7 @@
 Streamlit Web UI for Document Scanner & Converter.
 Supports:
 1. Image capture directly via webcam/camera (st.camera_input) or file upload.
-2. Perspective transformation & adaptive thresholding (scanned look).
+2. Perspective transformation & intelligent document enhancement (Magic Color / Crisp B&W).
 3. Export to PDF (.pdf) and Word (.docx) with standard A4 layout.
 4. Optical Character Recognition (OCR) to extract editable text into Word.
 5. 1-click DOCX to PDF converter using Microsoft Word COM automation.
@@ -19,7 +19,8 @@ import streamlit as st
 # Core CV imports from src
 from src.detect_page import detect_page_corners
 from src.transform import warp_from_result
-from src.thresholding import thresh_document
+from src.thresholding import thresh_document, magic_color_document, magic_gray_document
+from src.ocr_engine import extract_text_from_image
 
 
 # --- HELPER EXPORT FUNCTIONS (Self-contained & compatible with src.export / src.converter / src.ocr_engine) ---
@@ -86,15 +87,8 @@ def generate_docx_bytes(img_input: np.ndarray, title: str = "Tài Liệu Đã Qu
 def perform_ocr_and_export_docx(img_input: np.ndarray, lang: str = "en") -> Tuple[str, bytes]:
     """Runs OCR and generates an editable Word DOCX file."""
     text = ""
-    # Try using winocr
     try:
-        import winocr
-        if img_input.ndim == 2:
-            bgr = cv2.cvtColor(img_input, cv2.COLOR_GRAY2BGR)
-        else:
-            bgr = img_input
-        res = winocr.recognize_cv2_sync(bgr, lang=lang)
-        text = res.get("text", "").strip()
+        text = extract_text_from_image(img_input, lang=lang)
     except Exception as e:
         text = f"(Không thể kích hoạt OCR tự động: {e})"
 
@@ -222,7 +216,20 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
     max_dim = st.sidebar.slider("Độ phân giải phát hiện viền (max dim)", min_value=600, max_value=2000, value=1200, step=100)
     output_style = st.sidebar.selectbox(
         "Kiểu ảnh xuất:",
-        ["Ảnh scan trắng đen (B&W High-Contrast)", "Ảnh màu nắn phẳng (Color Deskewed)"]
+        [
+            "✨ Scan thông minh (Magic Color - Nền trắng, chữ rõ nét)",
+            "🖋️ Scan xám mịn (Magic Gray - Chống răng cưa, nét tự nhiên)",
+            "📄 Scan đen trắng (B&W High-Contrast)",
+            "🖼️ Ảnh màu nắn phẳng (Color Deskewed)",
+        ]
+    )
+    contrast_boost = st.sidebar.slider(
+        "Độ đậm nét chữ (Ink Boost):",
+        min_value=1.0,
+        max_value=4.0,
+        value=2.2,
+        step=0.2,
+        help="Tăng giá trị nếu ảnh chụp bị mờ, nét bút nhạt hoặc ánh sáng phòng bị chói",
     )
     ocr_lang = st.sidebar.selectbox(
         "Ngôn ngữ OCR (Trích xuất chữ):",
@@ -308,11 +315,15 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
                 warped = raw_cv_img.copy()
 
             if warped is not None:
-                thresh_scan = thresh_document(warped)
-                
-                # Determine display image based on sidebar selection
-                if "B&W" in output_style:
-                    final_img = thresh_scan
+                # Determine display and export image based on sidebar selection
+                if "Magic Color" in output_style:
+                    final_img = magic_color_document(warped, contrast_boost=contrast_boost)
+                    display_rgb = cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB)
+                elif "Magic Gray" in output_style:
+                    final_img = magic_gray_document(warped, contrast_boost=contrast_boost)
+                    display_rgb = cv2.cvtColor(final_img, cv2.COLOR_GRAY2RGB)
+                elif "B&W" in output_style:
+                    final_img = thresh_document(warped, contrast_boost=contrast_boost)
                     display_rgb = cv2.cvtColor(final_img, cv2.COLOR_GRAY2RGB)
                 else:
                     final_img = warped
