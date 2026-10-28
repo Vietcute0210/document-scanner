@@ -18,7 +18,7 @@ import streamlit as st
 
 # Core CV imports from src
 from src.detect_page import detect_page_corners
-from src.transform import warp_from_result
+from src.transform import warp_from_result, sample_curved_boundary
 from src.thresholding import thresh_document, magic_color_document, magic_gray_document
 from src.ocr_engine import extract_text_from_image
 
@@ -212,6 +212,24 @@ st.sidebar.markdown("---")
 
 if app_mode == "📄 Quét & Xuất Tài Liệu":
     st.sidebar.subheader("Bộ Lọc & Xử Lý Ảnh")
+    boundary_mode_label = st.sidebar.selectbox(
+        "Số điểm neo nhận diện viền:",
+        [
+            "8 điểm (4 Góc + 4 Trung điểm - Khuyên dùng)",
+            "12 điểm (Bám sát giấy uốn cong)",
+            "6 điểm (4 Góc + 2 Trung điểm Trên/Dưới)",
+            "4 điểm (Tứ giác cơ bản)",
+        ],
+        index=0,
+        help="Sử dụng 8 hoặc 12 điểm neo giúp bám sát mép vở bị cong/bo góc và nắn phẳng bằng lưới Coons Patch.",
+    )
+    num_points_map = {
+        "8 điểm (4 Góc + 4 Trung điểm - Khuyên dùng)": 8,
+        "12 điểm (Bám sát giấy uốn cong)": 12,
+        "6 điểm (4 Góc + 2 Trung điểm Trên/Dưới)": 6,
+        "4 điểm (Tứ giác cơ bản)": 4,
+    }
+    num_points = num_points_map[boundary_mode_label]
     use_clahe = st.sidebar.checkbox("Khử bóng & Cân bằng sáng (CLAHE)", value=False, help="Hữu ích khi chụp tài liệu bị sấp bóng hoặc ánh sáng không đều")
     max_dim = st.sidebar.slider("Độ phân giải phát hiện viền (max dim)", min_value=600, max_value=2000, value=1200, step=100)
     output_style = st.sidebar.selectbox(
@@ -289,7 +307,12 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
     if raw_cv_img is not None:
         st.markdown("---")
         with st.spinner("Đang nhận diện viền tài liệu và xử lý nắn thẳng..."):
-            detection = detect_page_corners(raw_cv_img, max_dim=max_dim, use_clahe=use_clahe)
+            detection = detect_page_corners(
+                raw_cv_img,
+                max_dim=max_dim,
+                use_clahe=use_clahe,
+                num_points=num_points,
+            )
 
         col1, col2 = st.columns(2)
 
@@ -297,12 +320,19 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
             st.subheader("1. Ảnh Gốc & Đường Bao Nhận Diện")
             overlay = raw_cv_img.copy()
             if detection.corners is not None:
-                pts = detection.corners.reshape(-1, 1, 2).astype("int32")
-                cv2.polylines(overlay, [pts], True, (0, 255, 0), max(3, int(overlay.shape[1] / 300)))
+                b_pts = detection.boundary_points if detection.boundary_points is not None else detection.corners
+                smooth_poly = sample_curved_boundary(b_pts, samples_per_side=24).reshape(-1, 1, 2).astype("int32")
+                cv2.polylines(overlay, [smooth_poly], True, (0, 255, 0), max(3, int(overlay.shape[1] / 300)))
+                r_mid = max(6, int(overlay.shape[1] / 180))
+                for (x, y) in b_pts:
+                    cv2.circle(overlay, (int(x), int(y)), r_mid, (0, 180, 255), -1)
+                r_corner = max(8, int(overlay.shape[1] / 140))
                 for (x, y) in detection.corners:
-                    cv2.circle(overlay, (int(x), int(y)), max(8, int(overlay.shape[1] / 150)), (0, 0, 255), -1)
+                    cv2.circle(overlay, (int(x), int(y)), r_corner, (0, 0, 255), -1)
                 st.image(cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB), use_container_width=True)
-                st.success(f"Thuật toán: **{detection.method}** | Điểm tin cậy: **{detection.score:.2f}**")
+                st.success(
+                    f"Thuật toán: **{detection.method}** | Chế độ: **{len(b_pts)} điểm neo** | Điểm tin cậy: **{detection.score:.2f}**"
+                )
             else:
                 st.image(cv2.cvtColor(raw_cv_img, cv2.COLOR_BGR2RGB), use_container_width=True)
                 st.warning("Không nhận diện được rõ 4 góc viền tài liệu. Sẽ giữ nguyên toàn bộ ảnh.")
