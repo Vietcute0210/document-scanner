@@ -8,6 +8,7 @@ from src.io_handling import imread_color, ensure_dir
 from src.detect_page import detect_page_corners
 from src.thresholding import thresh_document
 from src.transform import warp_from_result
+from src.export import export_images_to_pdf, export_images_to_docx
 
 IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
 
@@ -38,6 +39,8 @@ def main():
     ap.add_argument("--max-dim", type=int, default=1200)
     ap.add_argument("--clahe", action="store_true")
     ap.add_argument("--save-failures", action="store_true", help="Save debug images only for failures")
+    ap.add_argument("--pdf", action="store_true", help="Export all successful scans into a multi-page PDF")
+    ap.add_argument("--docx", action="store_true", help="Export all successful scans into a multi-page Word document")
     args = ap.parse_args()
 
     ensure_dir(args.outdir)
@@ -48,6 +51,7 @@ def main():
     scores = []
     fg_ratios = []
     num_ccs = []
+    scanned_images = []
 
 
     with open(out_csv, "w", newline="") as f:
@@ -88,6 +92,7 @@ def main():
 
                 fg_ratios.append(fg_ratio)
                 num_ccs.append(num_cc)
+                scanned_images.append(thresh_img)
             
             else:
                 if args.save_failures:
@@ -107,6 +112,16 @@ def main():
     print(f"Avg Fg ratio: {avg_fg_ratio:.4f}")
     print(f"Avg connected components: {avg_num_cc:.2f}")
     print(f"Log written to: {out_csv}")
+
+    if args.pdf and scanned_images:
+        multi_pdf = Path(args.outdir) / "all_scanned.pdf"
+        export_images_to_pdf(scanned_images, multi_pdf)
+        print(f"Multi-page PDF saved:  {multi_pdf}")
+
+    if args.docx and scanned_images:
+        multi_docx = Path(args.outdir) / "all_scanned.docx"
+        export_images_to_docx(scanned_images, multi_docx, title="Scanned Documents Collection")
+        print(f"Multi-page DOCX saved: {multi_docx}")
 
 
 if __name__ == "__main__":

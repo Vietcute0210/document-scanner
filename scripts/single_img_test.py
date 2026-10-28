@@ -8,6 +8,7 @@ from src.detect_page import detect_page_corners
 
 from src.transform import warp_from_result
 from src.thresholding import thresh_document
+from src.export import export_images_to_pdf, export_images_to_docx
 
 def main():
     ap = argparse.ArgumentParser()
@@ -15,6 +16,8 @@ def main():
     ap.add_argument("--outdir", default="outputs/debug/run_one", help="Debug output directory")
     ap.add_argument("--max-dim", type=int, default=1200, help="Max dimension for detection resize")
     ap.add_argument("--clahe", action="store_true", help="Use CLAHE (sometimes helps with shadows)")
+    ap.add_argument("--pdf", action="store_true", help="Export scanned document to PDF (.pdf)")
+    ap.add_argument("--docx", action="store_true", help="Export scanned document to Word (.docx)")
     args = ap.parse_args()
 
     img = imread_color(args.img)
@@ -55,6 +58,16 @@ def main():
     out_scan = str(Path(args.outdir) / "scanned_doc.png")
     cv2.imwrite(out_scan, thresh_img)
     print(f"Saved: {out_scan}")
+
+    if args.pdf:
+        pdf_path = Path(args.outdir) / "scanned_doc.pdf"
+        export_images_to_pdf(thresh_img, pdf_path)
+        print(f"Saved PDF:  {pdf_path}")
+
+    if args.docx:
+        docx_path = Path(args.outdir) / "scanned_doc.docx"
+        export_images_to_docx(thresh_img, docx_path, title=f"Scanned Document - {Path(args.img).stem}")
+        print(f"Saved DOCX: {docx_path}")
 
 
 if __name__ == "__main__":
