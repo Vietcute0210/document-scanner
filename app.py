@@ -1,13 +1,17 @@
 """
-Streamlit Web UI for Document Scanner & Converter.
+Streamlit Web UI for Document Scanner & Converter Studio.
 Supports:
-1. Image capture directly via webcam/camera (st.camera_input) or file upload.
-2. Perspective transformation & intelligent document enhancement (Magic Color / Crisp B&W).
-3. Export to PDF (.pdf) and Word (.docx) with standard A4 layout.
-4. Optical Character Recognition (OCR) to extract editable text into Word.
-5. 1-click DOCX to PDF converter using Microsoft Word COM automation.
+1. Image capture directly via webcam/camera (st.camera_input), file upload, or sample document selection.
+2. Automatic page corner & curved boundary detection.
+3. Interactive Quad Manual Editor: drag corner points (red dots) or drag straight edges (orange midpoints)
+   with real-time magnification and convexity constraints (guaranteed strictly straight lines / no curves).
+4. Perspective transformation & intelligent document enhancement (Magic Color / Crisp B&W).
+5. Export to PDF (.pdf) and Word (.docx) with standard A4 layout.
+6. Optical Character Recognition (OCR) to extract editable text into Word.
+7. 1-click DOCX to PDF converter using Microsoft Word COM automation.
 """
 
+import hashlib
 import io
 from pathlib import Path
 from typing import Optional, Tuple
@@ -17,13 +21,14 @@ from PIL import Image
 import streamlit as st
 
 # Core CV imports from src
-from src.detect_page import detect_page_corners
-from src.transform import warp_from_result, sample_curved_boundary
+from src.detect_page import detect_page_corners, DetectionResult
+from src.transform import warp_from_result, four_point_transform, sample_curved_boundary
 from src.thresholding import thresh_document, magic_color_document, magic_gray_document
 from src.ocr_engine import extract_text_from_image
+from src.quad_editor import render_quad_editor
 
 
-# --- HELPER EXPORT FUNCTIONS (Self-contained & compatible with src.export / src.converter / src.ocr_engine) ---
+# --- HELPER EXPORT FUNCTIONS ---
 
 def generate_pdf_bytes(img_input: np.ndarray, dpi: float = 150.0) -> bytes:
     """Generates PDF file bytes from a numpy image."""
@@ -260,7 +265,7 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
 
 if app_mode == "📄 Quét & Xuất Tài Liệu":
     st.markdown('<div class="main-header">📄 Document Scanner Studio</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-header">Tự động nhận diện 4 góc, nắn thẳng góc phối cảnh và xuất tài liệu PDF / Word chuẩn A4</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Tự động nhận diện 4 góc, cho phép chỉnh tay kéo góc & cạnh (đường thẳng), nắn phẳng và xuất PDF / Word chuẩn A4</div>', unsafe_allow_html=True)
 
     # Input method tabs
     tab_cam, tab_upload, tab_sample = st.tabs([
@@ -269,16 +274,16 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
         "🖼️ Dùng Ảnh Mẫu Có Sẵn"
     ])
 
-    raw_cv_img = None
-    source_name = "document"
+    new_img_detected = None
+    new_source_name = None
 
     with tab_cam:
         st.write("Bật camera/webcam và hướng về phía tài liệu:")
         camera_photo = st.camera_input("Chụp ảnh tài liệu")
         if camera_photo is not None:
             bytes_data = camera_photo.getvalue()
-            raw_cv_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-            source_name = "camera_capture"
+            new_img_detected = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+            new_source_name = "camera_capture"
 
     with tab_upload:
         uploaded_file = st.file_uploader(
@@ -287,8 +292,8 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
         )
         if uploaded_file is not None:
             bytes_data = uploaded_file.getvalue()
-            raw_cv_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-            source_name = Path(uploaded_file.name).stem
+            new_img_detected = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+            new_source_name = Path(uploaded_file.name).stem
 
     with tab_sample:
         sample_dir = Path("documents/raw")
@@ -296,56 +301,124 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
         if sample_files:
             sample_names = [f.name for f in sample_files]
             selected_sample = st.selectbox("Chọn một ảnh mẫu từ tập dữ liệu thử nghiệm:", sample_names)
-            if st.button("Tải và Quét Ảnh Mẫu Này"):
+            btn_load_sample = st.button("Tải và Quét Ảnh Mẫu Này")
+
+            if btn_load_sample:
                 sample_path = sample_dir / selected_sample
-                raw_cv_img = cv2.imread(str(sample_path))
-                source_name = Path(selected_sample).stem
+                new_img_detected = cv2.imread(str(sample_path))
+                new_source_name = Path(selected_sample).stem
+            elif "raw_cv_img" not in st.session_state:
+                # Load first sample by default on initial app launch
+                sample_path = sample_dir / sample_names[0]
+                new_img_detected = cv2.imread(str(sample_path))
+                new_source_name = Path(sample_names[0]).stem
         else:
             st.info("Chưa tìm thấy ảnh trong thư mục documents/raw")
+
+    # Persist uploaded/selected image across Streamlit rerun cycles
+    if new_img_detected is not None:
+        new_hash = hashlib.md5(new_img_detected.tobytes()).hexdigest()
+        old_hash = st.session_state.get("current_img_hash")
+        if new_hash != old_hash:
+            st.session_state["raw_cv_img"] = new_img_detected
+            st.session_state["source_name"] = new_source_name or "document"
+            st.session_state["current_img_hash"] = new_hash
+            # Force auto redetection for new image
+            st.session_state["needs_detection"] = True
+
+    raw_cv_img = st.session_state.get("raw_cv_img")
+    source_name = st.session_state.get("source_name", "document")
 
     # --- PROCESSING PIPELINE ---
     if raw_cv_img is not None:
         st.markdown("---")
-        with st.spinner("Đang nhận diện viền tài liệu và xử lý nắn thẳng..."):
-            detection = detect_page_corners(
-                raw_cv_img,
-                max_dim=max_dim,
-                use_clahe=use_clahe,
-                num_points=num_points,
-            )
+        img_h, img_w = raw_cv_img.shape[:2]
+        current_detect_params = (max_dim, use_clahe, num_points)
+        cached_params = st.session_state.get("last_detect_params")
+        needs_detection = st.session_state.get("needs_detection", False) or (current_detect_params != cached_params)
+
+        if needs_detection or "detection" not in st.session_state:
+            with st.spinner("Đang nhận diện viền tài liệu tự động..."):
+                detection = detect_page_corners(
+                    raw_cv_img,
+                    max_dim=max_dim,
+                    use_clahe=use_clahe,
+                    num_points=num_points,
+                )
+            st.session_state["detection"] = detection
+            st.session_state["last_detect_params"] = current_detect_params
+            st.session_state["needs_detection"] = False
+
+            # Initialize corners from detection or default quad
+            if detection.corners is not None:
+                st.session_state["active_corners"] = detection.corners.copy()
+            else:
+                margin_x = float(img_w * 0.05)
+                margin_y = float(img_h * 0.05)
+                st.session_state["active_corners"] = np.array([
+                    [margin_x, margin_y],
+                    [img_w - margin_x, margin_y],
+                    [img_w - margin_x, img_h - margin_y],
+                    [margin_x, img_h - margin_y]
+                ], dtype=np.float32)
+
+            st.session_state["is_manual_mode"] = False
+
+        detection: DetectionResult = st.session_state["detection"]
+        active_corners: np.ndarray = st.session_state.get("active_corners")
+        is_manual_mode: bool = st.session_state.get("is_manual_mode", False)
 
         col1, col2 = st.columns(2)
 
+        # --- COLUMN 1: INTERACTIVE QUAD EDITOR ---
         with col1:
-            st.subheader("1. Ảnh Gốc & Đường Bao Nhận Diện")
-            overlay = raw_cv_img.copy()
-            if detection.corners is not None:
-                b_pts = detection.boundary_points if detection.boundary_points is not None else detection.corners
-                smooth_poly = sample_curved_boundary(b_pts, samples_per_side=24).reshape(-1, 1, 2).astype("int32")
-                cv2.polylines(overlay, [smooth_poly], True, (0, 255, 0), max(3, int(overlay.shape[1] / 300)))
-                r_mid = max(6, int(overlay.shape[1] / 180))
-                for (x, y) in b_pts:
-                    cv2.circle(overlay, (int(x), int(y)), r_mid, (0, 180, 255), -1)
-                r_corner = max(8, int(overlay.shape[1] / 140))
-                for (x, y) in detection.corners:
-                    cv2.circle(overlay, (int(x), int(y)), r_corner, (0, 0, 255), -1)
-                st.image(cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB), use_container_width=True)
+            st.subheader("1. Căn Chỉnh Viền & Điểm Neo")
+
+            # Render interactive component
+            updated_corners, updated_is_manual = render_quad_editor(
+                image_bgr=raw_cv_img,
+                corners=active_corners,
+                auto_corners=detection.corners if detection.corners is not None else active_corners,
+                is_manual=is_manual_mode,
+                key=f"quad_editor_{st.session_state['current_img_hash'][:10]}",
+                display_max_dim=1050,
+            )
+
+            # Check if user updated quad
+            if (updated_is_manual != is_manual_mode) or not np.allclose(updated_corners, active_corners, atol=0.5):
+                st.session_state["active_corners"] = updated_corners
+                st.session_state["is_manual_mode"] = updated_is_manual
+                active_corners = updated_corners
+                is_manual_mode = updated_is_manual
+
+            if is_manual_mode:
+                st.info(
+                    "✏️ **Chế độ chỉnh tay (Đường thẳng):** Bạn có thể kéo tự do 4 chấm đỏ (góc) hoặc 4 chấm cam (cả cạnh). Viền luôn giữ thẳng tuyệt đối. Nhấn **↺ Về Tự Động** nếu muốn khôi phục."
+                )
+            elif detection.corners is not None:
+                b_count = len(detection.boundary_points) if detection.boundary_points is not None else 4
                 st.success(
-                    f"Thuật toán: **{detection.method}** | Chế độ: **{len(b_pts)} điểm neo** | Điểm tin cậy: **{detection.score:.2f}**"
+                    f"🟢 **Tự động nhận diện:** Thuật toán **{detection.method}** ({b_count} điểm neo) | Độ tin cậy: **{detection.score:.2f}**. (Kéo bất kỳ điểm đỏ/cam nào nếu muốn căn chỉnh lại bằng tay)."
                 )
             else:
-                st.image(cv2.cvtColor(raw_cv_img, cv2.COLOR_BGR2RGB), use_container_width=True)
-                st.warning("Không nhận diện được rõ 4 góc viền tài liệu. Sẽ giữ nguyên toàn bộ ảnh.")
+                st.warning("⚠️ Chưa tự động nhận diện được 4 góc rõ ràng. Bạn hãy kéo các chấm đỏ để căn chuẩn tài liệu.")
 
+        # --- COLUMN 2: RESULT & ENHANCEMENT ---
         with col2:
             st.subheader("2. Kết Quả Scan Hoàn Thiện")
-            if detection.corners is not None:
-                warped = warp_from_result(raw_cv_img, detection)
+
+            if is_manual_mode:
+                # Manual mode: strictly straight-line 4-point homography warp (no curves)
+                warped = four_point_transform(raw_cv_img, active_corners)
             else:
-                warped = raw_cv_img.copy()
+                # Auto mode: use multi-point Coons patch curved warp if available, else 4-point
+                if detection.corners is not None:
+                    warped = warp_from_result(raw_cv_img, detection)
+                else:
+                    warped = four_point_transform(raw_cv_img, active_corners)
 
             if warped is not None:
-                # Determine display and export image based on sidebar selection
+                # Apply document enhancement
                 if "Magic Color" in output_style:
                     final_img = magic_color_document(warped, contrast_boost=contrast_boost)
                     display_rgb = cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB)
@@ -360,8 +433,8 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
                     display_rgb = cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB)
 
                 st.image(display_rgb, use_container_width=True)
-                h, w = final_img.shape[:2]
-                st.caption(f"Kích thước tài liệu sau khi nắn: {w} x {h} px")
+                final_h, final_w = final_img.shape[:2]
+                st.caption(f"Kích thước tài liệu sau khi nắn: {final_w} x {final_h} px | Chế độ: {'Tứ giác thẳng (Chỉnh tay)' if is_manual_mode else 'Tự động'}")
 
         # --- EXPORT & DOWNLOAD SECTION ---
         st.markdown("---")
