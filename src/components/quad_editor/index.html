@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Quad Manual Editor</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: transparent;
+      color: #1e293b;
+      overflow: hidden;
+      padding: 4px;
+    }
+
+    .editor-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .badge-auto {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .badge-manual {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      background: #0f172a;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    canvas {
+      display: block;
+      touch-action: none;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .help-hint {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hint-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .hint-dot-red {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ef4444;
+      display: inline-block;
+      border: 1px solid #ffffff;
+    }
+
+    .hint-dot-orange {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #f59e0b;
+      display: inline-block;
+      border: 1px solid #ffffff;
+    }
+
+    .hint-line-green {
+      width: 14px;
+      height: 3px;
+      background: #10b981;
+      display: inline-block;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="editor-wrapper" id="wrapper">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span id="statusBadge" class="badge badge-auto">🟢 Tự Động Nhận Diện</span>
+      </div>
+      <div class="toolbar-right">
+        <button id="btnResetAuto" class="btn" title="Khôi phục lại viền tự động phát hiện ban đầu">
+          ↺ Về Tự Động
+        </button>
+        <button id="btnFullImage" class="btn" title="Mở rộng 4 góc ra toàn bộ mép ảnh">
+          ⛶ Toàn Mép Ảnh
+        </button>
+      </div>
+    </div>
+
+    <div class="canvas-container" id="canvasContainer">
+      <canvas id="editorCanvas"></canvas>
+    </div>
+
+    <div class="help-hint">
+      <span class="hint-item"><span class="hint-dot-red"></span> Chấm đỏ: Kéo chỉnh góc</span>
+      <span class="hint-item"><span class="hint-dot-orange"></span> Chấm cam: Kéo cả cạnh song song</span>
+      <span class="hint-item"><span class="hint-line-green"></span> Viền luôn thẳng tuyệt đối (tứ giác lồi)</span>
+    </div>
+  </div>
+
+  <script>
+    // --- STREAMLIT PROTOCOL MESSAGING ---
+    function sendReady() {
+      window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: "streamlit:componentReady",
+        apiVersion: 1
+      }, "*");
+    }
+
+    function setFrameHeight(height) {
+      window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: "streamlit:setFrameHeight",
+        height: height
+      }, "*");
+    }
+
+    function sendValue(value) {
+      window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: "streamlit:setComponentValue",
+        value: value
+      }, "*");
+    }
+
+    // --- GEOMETRY UTILITIES (Canvas Space) ---
+    function lineIntersection(p1, p2, p3, p4) {
+      const x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
+      const x3 = p3.x, y3 = p3.y, x4 = p4.x, y4 = p4.y;
+      const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+      if (Math.abs(denom) < 1e-5) return null;
+      const t1 = x1 * y2 - y1 * x2;
+      const t2 = x3 * y4 - y3 * x4;
+      const px = (t1 * (x3 - x4) - (x1 - x2) * t2) / denom;
+      const py = (t1 * (y3 - y4) - (y1 - y2) * t2) / denom;
+      return { x: px, y: py };
+    }
+
+    function isConvex(pts, minArea = 100) {
+      if (pts.length !== 4) return false;
+
+      // Shoelace area
+      let area = 0;
+      for (let i = 0; i < 4; i++) {
+        const j = (i + 1) % 4;
+        area += pts[i].x * pts[j].y;
+        area -= pts[i].y * pts[j].x;
+      }
+      area = Math.abs(area) * 0.5;
+      if (area < minArea) return false;
+
+      // Cross products
+      let prevCross = 0;
+      for (let i = 0; i < 4; i++) {
+        const p0 = pts[i];
+        const p1 = pts[(i + 1) % 4];
+        const p2 = pts[(i + 2) % 4];
+        const v1x = p1.x - p0.x, v1y = p1.y - p0.y;
+        const v2x = p2.x - p1.x, v2y = p2.y - p1.y;
+        const cross = v1x * v2y - v1y * v2x;
+        if (Math.abs(cross) < 1e-4) return false;
+        if (i === 0) {
+          prevCross = cross;
+        } else if ((cross > 0 && prevCross < 0) || (cross < 0 && prevCross > 0)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function clamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
+
+    // --- COMPONENT STATE ---
+    const canvas = document.getElementById("editorCanvas");
+    const ctx = canvas.getContext("2d");
+    const wrapper = document.getElementById("wrapper");
+    const statusBadge = document.getElementById("statusBadge");
+    const btnResetAuto = document.getElementById("btnResetAuto");
+    const btnFullImage = document.getElementById("btnFullImage");
+
+    let baseImg = new Image();
+    let imgLoaded = false;
+    let origW = 1000;
+    let origH = 1000;
+    let displayW = 800;
+    let displayH = 600;
+    let scaleX = 1;
+    let scaleY = 1;
+
+    // 4 corners in canvas space: [TL, TR, BR, BL]
+    let corners = [];
+    let initialAutoCorners = [];
+    let isManualEdited = false;
+    let lastRenderKey = null;
+
+    // Interaction state
+    let activeDrag = null; // { type: 'corner'|'edge', index: 0..3, startPts: [...], startMouse: {x,y} }
+    const CORNER_RADIUS = 9.5;
+    const MID_RADIUS = 7.5;
+    const HIT_RADIUS = 26; // generous hit zone for touch and mouse
+
+    function updateBadge(isManual) {
+      isManualEdited = isManual;
+      if (isManual) {
+        statusBadge.className = "badge badge-manual";
+        statusBadge.innerHTML = "✏️ Đã Chỉnh Tay (Thẳng Tuyệt Đối)";
+      } else {
+        statusBadge.className = "badge badge-auto";
+        statusBadge.innerHTML = "🟢 Tự Động Nhận Diện";
+      }
+    }
+
+    function getCanvasCoordinates(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+      const x = (clientX - rect.left) * (canvas.width / rect.width);
+      const y = (clientY - rect.top) * (canvas.height / rect.height);
+      return { x, y };
+    }
+
+    function getMidpoints() {
+      if (corners.length < 4) return [];
+      const mids = [];
+      for (let i = 0; i < 4; i++) {
+        const p0 = corners[i];
+        const p1 = corners[(i + 1) % 4];
+        mids.push({ x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 });
+      }
+      return mids;
+    }
+
+    function drawHandle(x, y, fillColor, radius, strokeColor = "#ffffff", strokeWidth = 2.5) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+      ctx.lineWidth = strokeWidth;
+      ctx.strokeStyle = strokeColor;
+      ctx.stroke();
+
+      // Inner shadow / accent for depth
+      ctx.beginPath();
+      ctx.arc(x, y, radius - 2, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(0,0,0,0.2)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawMagnifier(targetX, targetY) {
+      if (!imgLoaded) return;
+      const magSize = 130;
+      const zoom = 2.4;
+
+      // Position magnifier in opposite corner to avoid finger/mouse occlusion
+      let magX = targetX < canvas.width / 2 ? canvas.width - magSize - 16 : 16;
+      let magY = targetY < canvas.height / 2 ? canvas.height - magSize - 16 : 16;
+
+      ctx.save();
+      // Clip circle
+      ctx.beginPath();
+      ctx.arc(magX + magSize / 2, magY + magSize / 2, magSize / 2, 0, Math.PI * 2);
+      ctx.clip();
+
+      // Draw magnified portion of baseImg
+      const srcW = magSize / zoom;
+      const srcH = magSize / zoom;
+      const srcX = (targetX / canvas.width) * origW - srcW / 2;
+      const srcY = (targetY / canvas.height) * origH - srcH / 2;
+
+      ctx.drawImage(baseImg, srcX, srcY, srcW, srcH, magX, magY, magSize, magSize);
+
+      // Draw crosshairs
+      ctx.strokeStyle = "rgba(239, 68, 68, 0.85)";
+      ctx.lineWidth = 1.5;
+      const cx = magX + magSize / 2;
+      const cy = magY + magSize / 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - 14, cy); ctx.lineTo(cx + 14, cy);
+      ctx.moveTo(cx, cy - 14); ctx.lineTo(cx, cy + 14);
+      ctx.stroke();
+
+      // Outer border & shadow
+      ctx.restore();
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(magX + magSize / 2, magY + magSize / 2, magSize / 2, 0, Math.PI * 2);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#ffffff";
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function render() {
+      if (!imgLoaded || corners.length < 4) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 1. Base Image
+      ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
+
+      // 2. Dim outside quadrilateral
+      ctx.save();
+      ctx.fillStyle = "rgba(15, 23, 42, 0.42)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Cut out interior
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.beginPath();
+      ctx.moveTo(corners[0].x, corners[0].y);
+      for (let i = 1; i < 4; i++) {
+        ctx.lineTo(corners[i].x, corners[i].y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // 3. Draw straight quad boundary (Vibrant Green)
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(corners[0].x, corners[0].y);
+      for (let i = 1; i < 4; i++) {
+        ctx.lineTo(corners[i].x, corners[i].y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = "#10b981";
+      ctx.lineWidth = 3.5;
+      ctx.lineJoin = "round";
+      ctx.stroke();
+      ctx.restore();
+
+      // 4. Draw edge midpoints (Orange dots)
+      const mids = getMidpoints();
+      for (let i = 0; i < 4; i++) {
+        drawHandle(mids[i].x, mids[i].y, "#f59e0b", MID_RADIUS);
+      }
+
+      // 5. Draw 4 corner points (Red dots)
+      for (let i = 0; i < 4; i++) {
+        drawHandle(corners[i].x, corners[i].y, "#ef4444", CORNER_RADIUS);
+      }
+
+      // 6. Draw magnifier loupe if actively dragging
+      if (activeDrag) {
+        let activePos = { x: canvas.width / 2, y: canvas.height / 2 };
+        if (activeDrag.type === "corner") {
+          activePos = corners[activeDrag.index];
+        } else if (activeDrag.type === "edge") {
+          activePos = mids[activeDrag.index];
+        }
+        drawMagnifier(activePos.x, activePos.y);
+      }
+    }
+
+    // --- EMIT BACK TO PYTHON ---
+    function emitCornersToPython(isManual = true) {
+      if (corners.length < 4) return;
+      // Convert canvas coords back to original image coords
+      const origCorners = corners.map(pt => [
+        Math.round((pt.x / canvas.width) * origW * 10) / 10,
+        Math.round((pt.y / canvas.height) * origH * 10) / 10
+      ]);
+
+      sendValue({
+        corners: origCorners,
+        is_manual: isManual,
+        timestamp: Date.now()
+      });
+    }
+
+    // --- HIT TESTING ---
+    function findHitTarget(pos) {
+      // 1. Check 4 corners first (Red dots)
+      for (let i = 0; i < 4; i++) {
+        const d = Math.hypot(pos.x - corners[i].x, pos.y - corners[i].y);
+        if (d <= HIT_RADIUS) {
+          return { type: "corner", index: i };
+        }
+      }
+
+      // 2. Check 4 edge midpoints (Orange dots)
+      const mids = getMidpoints();
+      for (let i = 0; i < 4; i++) {
+        const d = Math.hypot(pos.x - mids[i].x, pos.y - mids[i].y);
+        if (d <= HIT_RADIUS) {
+          return { type: "edge", index: i };
+        }
+      }
+
+      // 3. Check proximity along 4 edge segments
+      for (let i = 0; i < 4; i++) {
+        const p1 = corners[i];
+        const p2 = corners[(i + 1) % 4];
+        const d = pointToSegmentDistance(pos, p1, p2);
+        if (d <= 14) {
+          return { type: "edge", index: i };
+        }
+      }
+
+      return null;
+    }
+
+    function pointToSegmentDistance(p, a, b) {
+      const l2 = (b.x - a.x) ** 2 + (b.y - a.y) ** 2;
+      if (l2 === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+      let t = ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(p.x - (a.x + t * (b.x - a.x)), p.y - (a.y + t * (b.y - a.y)));
+    }
+
+    // --- DRAG LOGIC ---
+    function handlePointerDown(e) {
+      const pos = getCanvasCoordinates(e);
+      const hit = findHitTarget(pos);
+      if (!hit) return;
+
+      activeDrag = {
+        type: hit.type,
+        index: hit.index,
+        startPts: corners.map(p => ({ x: p.x, y: p.y })),
+        startMouse: pos
+      };
+
+      canvas.setPointerCapture(e.pointerId);
+      render();
+    }
+
+    function handlePointerMove(e) {
+      const pos = getCanvasCoordinates(e);
+
+      // Update cursor when hovering
+      if (!activeDrag) {
+        const hit = findHitTarget(pos);
+        if (hit) {
+          if (hit.type === "corner") {
+            canvas.style.cursor = "crosshair";
+          } else {
+            canvas.style.cursor = hit.index % 2 === 0 ? "ns-resize" : "ew-resize";
+          }
+        } else {
+          canvas.style.cursor = "default";
+        }
+        return;
+      }
+
+      // We are dragging
+      const dx = pos.x - activeDrag.startMouse.x;
+      const dy = pos.y - activeDrag.startMouse.y;
+      const startPts = activeDrag.startPts;
+
+      if (activeDrag.type === "corner") {
+        const idx = activeDrag.index;
+        const candidate = corners.map(p => ({ x: p.x, y: p.y }));
+        candidate[idx] = {
+          x: clamp(startPts[idx].x + dx, 0, canvas.width),
+          y: clamp(startPts[idx].y + dy, 0, canvas.height)
+        };
+
+        if (isConvex(candidate, (canvas.width * canvas.height) * 0.01)) {
+          corners = candidate;
+        }
+      } else if (activeDrag.type === "edge") {
+        // Move entire straight edge
+        const edgeIdx = activeDrag.index;
+        const iStart = edgeIdx;
+        const iEnd = (edgeIdx + 1) % 4;
+        const iPrev = (edgeIdx + 3) % 4;
+        const iNext = (edgeIdx + 2) % 4;
+
+        const pPrev = startPts[iPrev];
+        const pStart = startPts[iStart];
+        const pEnd = startPts[iEnd];
+        const pNext = startPts[iNext];
+
+        const transStart = { x: pStart.x + dx, y: pStart.y + dy };
+        const transEnd = { x: pEnd.x + dx, y: pEnd.y + dy };
+
+        // Intersect translated edge line with prev line
+        const newStart = lineIntersection(transStart, transEnd, pPrev, pStart);
+        // Intersect translated edge line with next line
+        const newEnd = lineIntersection(transStart, transEnd, pEnd, pNext);
+
+        const candidate = corners.map(p => ({ x: p.x, y: p.y }));
+        const maxDiag = Math.hypot(canvas.width, canvas.height) * 2;
+
+        let validIntersections = false;
+        if (newStart && newEnd) {
+          const d1 = Math.hypot(newStart.x - pStart.x, newStart.y - pStart.y);
+          const d2 = Math.hypot(newEnd.x - pEnd.x, newEnd.y - pEnd.y);
+          if (d1 < maxDiag && d2 < maxDiag) {
+            validIntersections = true;
+          }
+        }
+
+        if (validIntersections) {
+          candidate[iStart] = { x: clamp(newStart.x, 0, canvas.width), y: clamp(newStart.y, 0, canvas.height) };
+          candidate[iEnd] = { x: clamp(newEnd.x, 0, canvas.width), y: clamp(newEnd.y, 0, canvas.height) };
+        } else {
+          // Rigid translation fallback
+          candidate[iStart] = { x: clamp(transStart.x, 0, canvas.width), y: clamp(transStart.y, 0, canvas.height) };
+          candidate[iEnd] = { x: clamp(transEnd.x, 0, canvas.width), y: clamp(transEnd.y, 0, canvas.height) };
+        }
+
+        if (isConvex(candidate, (canvas.width * canvas.height) * 0.01)) {
+          corners = candidate;
+        }
+      }
+
+      render();
+    }
+
+    function handlePointerUp(e) {
+      if (!activeDrag) return;
+      try {
+        canvas.releasePointerCapture(e.pointerId);
+      } catch (err) {}
+      activeDrag = null;
+      canvas.style.cursor = "default";
+      updateBadge(true);
+      render();
+      emitCornersToPython(true);
+    }
+
+    canvas.addEventListener("pointerdown", handlePointerDown);
+    canvas.addEventListener("pointermove", handlePointerMove);
+    canvas.addEventListener("pointerup", handlePointerUp);
+    canvas.addEventListener("pointercancel", handlePointerUp);
+
+    // --- TOOLBAR BUTTON HANDLERS ---
+    btnResetAuto.addEventListener("click", () => {
+      if (initialAutoCorners.length === 4) {
+        corners = initialAutoCorners.map(p => ({ x: p.x, y: p.y }));
+        updateBadge(false);
+        render();
+        emitCornersToPython(false);
+      }
+    });
+
+    btnFullImage.addEventListener("click", () => {
+      corners = [
+        { x: 2, y: 2 },
+        { x: canvas.width - 2, y: 2 },
+        { x: canvas.width - 2, y: canvas.height - 2 },
+        { x: 2, y: canvas.height - 2 }
+      ];
+      updateBadge(true);
+      render();
+      emitCornersToPython(true);
+    });
+
+    // --- STREAMLIT MESSAGE LISTENER ---
+    window.addEventListener("message", (event) => {
+      if (event.data.type === "streamlit:render") {
+        const args = event.data.args;
+        if (!args || !args.image) return;
+
+        const currentKey = args.edit_id || args.image.substring(0, 40);
+        const isNewImage = (lastRenderKey !== currentKey);
+        lastRenderKey = currentKey;
+
+        origW = args.orig_width || 1000;
+        origH = args.orig_height || 1000;
+
+        baseImg.onload = () => {
+          imgLoaded = true;
+          // Calculate responsive canvas display size
+          const containerWidth = wrapper.clientWidth || 550;
+          displayW = Math.min(containerWidth, 800);
+          displayH = Math.round((displayW * origH) / origW);
+
+          canvas.width = displayW;
+          canvas.height = displayH;
+          scaleX = displayW / origW;
+          scaleY = displayH / origH;
+
+          // Always cache auto_corners from Python
+          if (args.auto_corners && args.auto_corners.length === 4) {
+            initialAutoCorners = args.auto_corners.map(pt => ({
+              x: pt[0] * scaleX,
+              y: pt[1] * scaleY
+            }));
+          }
+
+          // Convert incoming active corners to canvas space
+          if (args.corners && args.corners.length === 4) {
+            const incomingCanvas = args.corners.map(pt => ({
+              x: pt[0] * scaleX,
+              y: pt[1] * scaleY
+            }));
+
+            if (isNewImage || !args.is_manual) {
+              if (initialAutoCorners.length === 0) {
+                initialAutoCorners = incomingCanvas.map(p => ({ x: p.x, y: p.y }));
+              }
+              corners = (initialAutoCorners.length === 4 ? initialAutoCorners : incomingCanvas).map(p => ({ x: p.x, y: p.y }));
+              updateBadge(false);
+            } else {
+              corners = incomingCanvas.map(p => ({ x: p.x, y: p.y }));
+              updateBadge(true);
+            }
+          }
+
+          render();
+          setFrameHeight(wrapper.offsetHeight + 16);
+        };
+
+        baseImg.src = args.image;
+      }
+    });
+
+    // Notify Streamlit that the component is loaded and ready
+    sendReady();
+  </script>
+</body>
+</html>
