@@ -8,7 +8,8 @@ Supports:
 4. Perspective transformation & intelligent document enhancement (Magic Color / Crisp B&W).
 5. Export to PDF (.pdf) and Word (.docx) with standard A4 layout.
 6. Optical Character Recognition (OCR) to extract editable text into Word.
-7. 1-click DOCX to PDF converter using Microsoft Word COM automation.
+7. AI-powered OCR using Gemini 2.5 Flash Vision to reconstruct documents as editable Word files.
+8. 1-click DOCX to PDF converter using Microsoft Word COM automation.
 """
 
 import hashlib
@@ -127,6 +128,70 @@ def perform_ocr_and_export_docx(img_input: np.ndarray, lang: str = "en") -> Tupl
     buf = io.BytesIO()
     doc.save(buf)
     return text, buf.getvalue()
+
+
+def perform_ai_ocr_and_export_docx(
+    img_input: np.ndarray,
+    lang: str = "vi",
+    api_key: str = "",
+    model: str = "gemini-2.5-flash",
+) -> Tuple[str, bytes, dict]:
+    """
+    Uses Gemini AI Vision to analyze the scanned image and generate
+    an editable Word document that recreates the document content
+    (text, tables, lists, headings) — NOT just inserting the image.
+
+    Returns:
+        (extracted_text, docx_bytes, structured_dict)
+    """
+    from src.gemini_ocr import extract_structured_content, extract_text_with_gemini
+    from src.ai_docx_builder import build_smart_docx, build_simple_docx
+
+    key = api_key.strip() if api_key and api_key.strip() else None
+
+    try:
+        structured = extract_structured_content(img_input, lang=lang, api_key=key, model=model)
+        docx_bytes = build_smart_docx(structured, lang=lang)
+
+        # Build preview text
+        blocks = structured.get("blocks", [])
+        text_parts = []
+        if structured.get("title"):
+            text_parts.append(f"# {structured['title']}\n")
+
+        for b in blocks:
+            b_type = b.get("type", "paragraph")
+            if b_type == "heading":
+                level = b.get("level", 1)
+                text_parts.append(f"{'#' * (level + 1)} {b.get('content', '')}")
+            elif b_type == "table":
+                text_parts.append("\n[BẢNG BIỂU DỮ LIỆU]")
+                for row in b.get("rows", []):
+                    text_parts.append(" | ".join(str(c) for c in row))
+                text_parts.append("")
+            elif b_type == "list":
+                for item in b.get("items", []):
+                    text_parts.append(f"• {item}")
+            elif b_type == "image_description":
+                text_parts.append(f"\n[HÌNH ẢNH / SƠ ĐỒ]: {b.get('content', '')}\n")
+            else:
+                content = b.get("content", "")
+                if content:
+                    text_parts.append(content)
+
+        extracted_text = "\n".join(text_parts)
+        return extracted_text, docx_bytes, structured
+
+    except Exception as e:
+        # Fallback to plain text extraction with Gemini
+        try:
+            plain_text = extract_text_with_gemini(img_input, lang=lang, api_key=key, model=model)
+            docx_bytes = build_simple_docx(plain_text, title="Tài Liệu Tái Tạo Bằng AI")
+            return plain_text, docx_bytes, {"title": "Tài Liệu", "blocks": [{"type": "paragraph", "content": plain_text}]}
+        except Exception as e2:
+            err_msg = f"Lỗi Gemini AI ({model}): {e} (Fallback: {e2})"
+            err_docx = build_simple_docx(err_msg, title="Lỗi Xử Lý AI")
+            return err_msg, err_docx, {}
 
 
 def convert_docx_bytes_to_pdf_bytes(docx_bytes: bytes) -> bytes:
@@ -256,9 +321,26 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
     )
     ocr_lang = st.sidebar.selectbox(
         "Ngôn ngữ OCR (Trích xuất chữ):",
-        ["en", "vi"],
-        format_func=lambda x: "Tiếng Anh (en)" if x == "en" else "Tiếng Việt (vi)"
+        ["vi", "en"],
+        format_func=lambda x: "Tiếng Việt (vi)" if x == "vi" else "Tiếng Anh (en)"
     )
+
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🧠 Cấu Hình Gemini AI Vision")
+    ai_model = st.sidebar.selectbox(
+        "Mô hình Gemini:",
+        ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"],
+        index=0,
+        help="Gemini 2.5 Flash là mô hình thế hệ mới nhất, phân tích và tái tạo văn bản/bảng biểu cực nhanh và chính xác."
+    )
+    api_key_input = st.sidebar.text_input(
+        "Google AI Studio API Key:",
+        value=st.session_state.get("gemini_api_key_input", ""),
+        type="password",
+        help="Nhập API Key từ https://aistudio.google.com/app/apikey (hoặc tự động nạp từ .env nếu để trống)"
+    )
+    if api_key_input:
+        st.session_state["gemini_api_key_input"] = api_key_input
 
 
 # --- MAIN APP ROUTING ---
@@ -452,41 +534,67 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
                 mime="application/pdf",
                 use_container_width=True
             )
-            st.caption("Khổ A4 chuẩn nét, tương thích mọi máy in")
+            st.caption("Khổ A4 chuẩn in ấn")
 
         # 2. Download DOCX Image Layout Button
         with btn_col2:
             docx_layout_bytes = generate_docx_bytes(final_img, title=f"Tài Liệu Quét - {source_name}")
             st.download_button(
-                label="📝 Tải File Word (.docx) - Bản Scan",
+                label="📝 Tải Word (.docx) - Ảnh Scan",
                 data=docx_layout_bytes,
                 file_name=f"{source_name}_scanned.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 use_container_width=True
             )
-            st.caption("Nhúng trang scan chuẩn lề trang A4")
+            st.caption("Nhúng trang ảnh scan vào Word")
 
-        # 3. OCR Text Extraction Button
+        # 3. AI-Powered Smart DOCX Reconstruction (Gemini Vision)
         with btn_col3:
-            if st.button("🔍 Trích Xuất Chữ (OCR) Ra Word", use_container_width=True):
-                with st.spinner("Đang chạy OCR nhận diện văn bản..."):
-                    extracted_text, ocr_docx_bytes = perform_ocr_and_export_docx(warped, lang=ocr_lang)
+            ai_key_to_use = st.session_state.get("gemini_api_key_input", "")
+            if st.button("🧠 AI Tái Tạo Word (.docx)", type="primary", use_container_width=True, help="AI nhìn ảnh scan để tạo file Word nguyên bản: chữ, bảng biểu, danh sách, tiêu đề (không phải chèn ảnh)"):
+                with st.spinner(f"Đang gửi ảnh scan tới {ai_model} để phân tích và tái tạo Word..."):
+                    ai_text, ai_docx, ai_data = perform_ai_ocr_and_export_docx(
+                        final_img,
+                        lang=ocr_lang,
+                        api_key=ai_key_to_use,
+                        model=ai_model
+                    )
+                st.session_state["ai_text"] = ai_text
+                st.session_state["ai_docx"] = ai_docx
+                st.session_state["ai_data"] = ai_data
 
-                st.session_state["ocr_text"] = extracted_text
-                st.session_state["ocr_docx_bytes"] = ocr_docx_bytes
-
-            if "ocr_docx_bytes" in st.session_state:
+            if "ai_docx" in st.session_state and st.session_state["ai_docx"]:
                 st.download_button(
-                    label="💾 Tải Word Văn Bản OCR (.docx)",
-                    data=st.session_state["ocr_docx_bytes"],
-                    file_name=f"{source_name}_ocr_text.docx",
+                    label="✨ Tải Word Tái Tạo Bởi AI",
+                    data=st.session_state["ai_docx"],
+                    file_name=f"{source_name}_ai_reconstructed.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True
                 )
+            st.caption(f"Tái tạo cấu trúc bằng {ai_model}")
 
-        if "ocr_text" in st.session_state and st.session_state["ocr_text"]:
-            with st.expander("📖 Xem trước nội dung văn bản nhận dạng được (OCR Text Preview)", expanded=True):
-                st.text_area("Nội dung trích xuất:", value=st.session_state["ocr_text"], height=160)
+        # AI Preview Container
+        if "ai_text" in st.session_state and st.session_state["ai_text"]:
+            st.markdown("---")
+            st.markdown("#### ✨ Kết Quả Tái Tạo Tài Liệu Bởi Gemini AI")
+            ai_data = st.session_state.get("ai_data", {})
+            blocks = ai_data.get("blocks", [])
+            
+            p_count = sum(1 for b in blocks if b.get("type") == "paragraph")
+            h_count = sum(1 for b in blocks if b.get("type") == "heading")
+            t_count = sum(1 for b in blocks if b.get("type") == "table")
+            l_count = sum(1 for b in blocks if b.get("type") == "list")
+            img_count = sum(1 for b in blocks if b.get("type") == "image_description")
+
+            m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns(5)
+            m_col1.metric("Tiêu đề", h_count)
+            m_col2.metric("Đoạn văn", p_count)
+            m_col3.metric("Bảng biểu", t_count)
+            m_col4.metric("Danh sách", l_count)
+            m_col5.metric("Hình/Sơ đồ", img_count)
+
+            with st.expander("📖 Xem chi tiết nội dung văn bản và cấu trúc tái tạo", expanded=True):
+                st.text_area("Nội dung Word tái tạo:", value=st.session_state["ai_text"], height=200)
 
 
 elif app_mode == "🔄 Chuyển Đổi DOCX sang PDF":

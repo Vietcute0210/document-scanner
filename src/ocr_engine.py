@@ -39,7 +39,16 @@ def extract_text_from_image(
     else:
         raise TypeError(f"Unsupported image type: {type(image)}")
 
-    # Try Windows native OCR first
+    # Try Gemini AI Vision OCR first (highest priority)
+    try:
+        from src.gemini_ocr import extract_text_with_gemini
+        text = extract_text_with_gemini(cv_img, lang=lang)
+        if text and text.strip():
+            return text
+    except Exception:
+        pass  # Fall through to traditional OCR engines
+
+    # Try Windows native OCR
     try:
         import winocr
         target_lang = lang
