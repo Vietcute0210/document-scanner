@@ -117,8 +117,9 @@ def extract_text_with_gemini(
         f"- Chỉ trả về nội dung text, KHÔNG thêm giải thích hay bình luận.\n"
     )
 
-    # Build API request
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+    # Candidate models for automatic failover if chosen model returns 404/503
+    fallback_pool = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3-flash-preview", "gemini-3.8-flash"]
+    models_to_try = [model] + [m for m in fallback_pool if m != model]
 
     payload = {
         "contents": [
@@ -139,23 +140,35 @@ def extract_text_with_gemini(
             "maxOutputTokens": 8192,
         },
     }
-
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=data,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
 
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            result = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Gemini API error {e.code}: {body}")
-    except Exception as e:
-        raise RuntimeError(f"Gemini API connection error: {e}")
+    result = None
+    last_err = None
+    for cur_model in models_to_try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{cur_model}:generateContent?key={key}"
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+                break
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="replace")
+            last_err = f"{cur_model} error {e.code}: {body}"
+            # If 404 or 503, continue to fallback model
+            if e.code in (404, 503):
+                continue
+            raise RuntimeError(f"Gemini API error {e.code}: {body}")
+        except Exception as e:
+            last_err = str(e)
+            continue
+
+    if result is None:
+        raise RuntimeError(f"Gemini API all candidate models failed: {last_err}")
 
     # Parse response
     try:
@@ -249,7 +262,9 @@ def extract_structured_content(
         f"- CHỈ trả về JSON hợp lệ, không có text nào khác.\n"
     )
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+    # Candidate models for automatic failover if chosen model returns 404/503
+    fallback_pool = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3-flash-preview", "gemini-3.8-flash"]
+    models_to_try = [model] + [m for m in fallback_pool if m != model]
 
     payload = {
         "contents": [
@@ -271,23 +286,34 @@ def extract_structured_content(
             "responseMimeType": "application/json",
         },
     }
-
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=data,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
 
-    try:
-        with urllib.request.urlopen(req, timeout=90) as resp:
-            result = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Gemini API error {e.code}: {body}")
-    except Exception as e:
-        raise RuntimeError(f"Gemini API connection error: {e}")
+    result = None
+    last_err = None
+    for cur_model in models_to_try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{cur_model}:generateContent?key={key}"
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+                break
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="replace")
+            last_err = f"{cur_model} error {e.code}: {body}"
+            if e.code in (404, 503):
+                continue
+            raise RuntimeError(f"Gemini API error {e.code}: {body}")
+        except Exception as e:
+            last_err = str(e)
+            continue
+
+    if result is None:
+        raise RuntimeError(f"Gemini API all candidate models failed: {last_err}")
 
     # Parse response
     try:
