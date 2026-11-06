@@ -522,7 +522,7 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
         st.markdown("---")
         st.subheader("📥 Xuất Tài Liệu & Tải Về")
 
-        btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4)
+        btn_col1, btn_col2, btn_col3 = st.columns(3)
 
         # 1. Download PDF Button
         with btn_col1:
@@ -534,7 +534,7 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
                 mime="application/pdf",
                 use_container_width=True
             )
-            st.caption("Khổ A4 chuẩn nét")
+            st.caption("Khổ A4 chuẩn in ấn")
 
         # 2. Download DOCX Image Layout Button
         with btn_col2:
@@ -546,31 +546,12 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 use_container_width=True
             )
-            st.caption("Nhúng ảnh scan vào Word")
+            st.caption("Nhúng trang ảnh scan vào Word")
 
-        # 3. OCR Text Extraction Button (Traditional)
+        # 3. AI-Powered Smart DOCX Reconstruction (Gemini Vision)
         with btn_col3:
-            if st.button("🔍 OCR Truyền Thống", use_container_width=True, help="Dùng engine WinOCR cục bộ"):
-                with st.spinner("Đang chạy OCR nhận diện văn bản..."):
-                    extracted_text, ocr_docx_bytes = perform_ocr_and_export_docx(warped, lang=ocr_lang)
-
-                st.session_state["ocr_text"] = extracted_text
-                st.session_state["ocr_docx_bytes"] = ocr_docx_bytes
-
-            if "ocr_docx_bytes" in st.session_state:
-                st.download_button(
-                    label="💾 Tải Word OCR Thường",
-                    data=st.session_state["ocr_docx_bytes"],
-                    file_name=f"{source_name}_ocr_text.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True
-                )
-            st.caption("Trích xuất chữ dạng thô")
-
-        # 4. AI-Powered Smart DOCX Reconstruction (Gemini 2.5 Flash)
-        with btn_col4:
             ai_key_to_use = st.session_state.get("gemini_api_key_input", "")
-            if st.button("🧠 AI Tái Tạo Word (.docx)", type="primary", use_container_width=True, help="Gemini 2.5 Flash nhìn ảnh scan để tạo file Word nguyên bản: chữ, bảng biểu, danh sách, tiêu đề (không phải chèn ảnh)"):
+            if st.button("🧠 AI Tái Tạo Word (.docx)", type="primary", use_container_width=True, help="AI nhìn ảnh scan để tạo file Word nguyên bản: chữ, bảng biểu, danh sách, tiêu đề (không phải chèn ảnh)"):
                 with st.spinner(f"Đang gửi ảnh scan tới {ai_model} để phân tích và tái tạo Word..."):
                     ai_text, ai_docx, ai_data = perform_ai_ocr_and_export_docx(
                         final_img,
@@ -614,11 +595,6 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
 
             with st.expander("📖 Xem chi tiết nội dung văn bản và cấu trúc tái tạo", expanded=True):
                 st.text_area("Nội dung Word tái tạo:", value=st.session_state["ai_text"], height=200)
-
-        # Traditional OCR Preview
-        if "ocr_text" in st.session_state and st.session_state["ocr_text"] and not st.session_state.get("ai_text"):
-            with st.expander("📖 Xem trước nội dung OCR truyền thống", expanded=True):
-                st.text_area("Nội dung OCR:", value=st.session_state["ocr_text"], height=160)
 
 
 elif app_mode == "🔄 Chuyển Đổi DOCX sang PDF":
