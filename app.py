@@ -378,7 +378,7 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
             new_source_name = Path(uploaded_file.name).stem
 
     with tab_sample:
-        sample_dir = Path("documents/raw")
+        sample_dir = Path("documents/sample")
         sample_files = list(sample_dir.glob("*.jpg")) + list(sample_dir.glob("*.png"))
         if sample_files:
             sample_names = [f.name for f in sample_files]
@@ -395,7 +395,7 @@ if app_mode == "📄 Quét & Xuất Tài Liệu":
                 new_img_detected = cv2.imread(str(sample_path))
                 new_source_name = Path(sample_names[0]).stem
         else:
-            st.info("Chưa tìm thấy ảnh trong thư mục documents/raw")
+            st.info("Chưa tìm thấy ảnh trong thư mục documents/sample")
 
     # Persist uploaded/selected image across Streamlit rerun cycles
     if new_img_detected is not None:

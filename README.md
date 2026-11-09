@@ -1,289 +1,283 @@
-# Document Scanner & Converter Studio
+# 📄 Document Scanner & Converter Studio
 
-A high-performance document scanning, perspective rectification, OCR extraction, and format conversion system built with Python, OpenCV, and Streamlit.
+Hệ thống quét tài liệu thông minh, nắn phẳng góc nghiêng (Perspective & Coons Patch Mesh Warp), nhận diện ký tự quang học (OCR) và chuyển đổi định dạng tài liệu đa năng được xây dựng trên nền tảng **Python**, **OpenCV**, **Streamlit** và **Google Gemini AI**.
 
-This project transforms mobile camera captures, webcam frames, or uploaded document images into clean, flat, high-contrast digital scans. It features automatic 4-corner document detection, perspective deskewing, binarization, optical character recognition (OCR), and direct multi-format export to **PDF (.pdf)** and **Microsoft Word (.docx)**. It also includes an integrated **1-click Word-to-PDF converter** powered by native Microsoft Word COM automation.
+Dự án cho phép chuyển đổi ảnh chụp tài liệu từ điện thoại, webcam hoặc tập tin tải lên thành bản scan phẳng, sạch nền, tương phản cao tương đương các ứng dụng quét chuyên nghiệp (CamScanner, Adobe Scan). Đồng thời, hệ thống tích hợp công nghệ AI Vision thế hệ mới (**Gemini 2.5 Flash**) giúp tái tạo văn bản gốc sang định dạng **Microsoft Word (.docx)** có đầy đủ cấu trúc (tiêu đề, bảng biểu, danh sách) và hỗ trợ chuyển đổi sang **PDF (.pdf)** giữ nguyên 100% định dạng.
 
----
-
-## 🌟 Key Features
-
-- **Automated Page Boundary Detection**: Multi-metric quadrilateral scoring evaluating candidate contours by area, convexity, corner angles ($60^\circ - 120^\circ$), aspect ratio penalties, and border proximity.
-- **Perspective Deskewing & Rectification**: 4-point perspective warp transformation that automatically calculates optimal document dimensions and straightens tilted or angled shots.
-- **Scanned Image Enhancement**: Adaptive Gaussian thresholding and two-stage morphological filtering (Opening + Closing) to remove background shadows, clean noise, and enhance ink strokes.
-- **Direct Camera Capture**:
-  - Web UI: Real-time photo capture using Streamlit (`st.camera_input`).
-  - CLI: High-resolution live webcam preview with Space-to-capture (`scripts/capture_scan.py`).
-- **Dual Export Formats**:
-  - **Standardized PDF (.pdf)**: High-resolution A4 document layout ready for printing or archiving.
-  - **Word (.docx) - Scanned Layout**: Scanned pages embedded into A4 formatted Word documents with standard margins.
-  - **Word (.docx) - OCR Editable Text**: Optical character recognition extracts text directly into editable Word paragraphs.
-- **1-Click DOCX to PDF Converter**: Native Microsoft Word COM automation on Windows to convert any `.docx` file to `.pdf` while preserving 100% of fonts, layouts, and formatting.
-- **Interactive Web UI**: Streamlit-powered dashboard offering dual operating modes, side-by-side visual comparisons, parameter sliders, OCR preview, and 1-click downloads.
-- **1-Click Windows Launcher**: Convenient `run_app.bat` script for launching the application directly in your default browser.
+🌐 **Demo trực tuyến (Cloud Deployment)**: [https://document-cute.streamlit.app/](https://document-cute.streamlit.app/)
 
 ---
 
-## 🏗️ System Architecture & Pipeline
+## 🌟 Các Tính Năng Nổi Bật
+
+1. **Nhận diện viền trang tự động đa điểm neo (4, 6, 8, 12 điểm)**:
+   - Thuật toán phân tích đa kênh màu (LAB, HSV, Canny, Otsu) kết hợp hàm chấm điểm lồi (Convexity), góc trong ($60^\circ - 120^\circ$) và độ thuần khiết nền giấy (Paper Purity Score).
+   - Tự động bám sát mép giấy bị cong võng hoặc bo tròn góc nhờ cơ chế bắn tia chuẩn tắc (Normal Ray-Casting) tại các trung điểm viền.
+2. **Bộ chỉnh tay viền tài liệu tương tác trực tiếp (Interactive Quad Canvas Editor)**:
+   - Tích hợp canvas HTML5/JavaScript hai chiều mượt mà ngay trên trình duyệt.
+   - Kéo tự do 4 góc (chấm đỏ) hoặc dịch chuyển song song toàn bộ cạnh (chấm cam) với thấu kính phóng đại thời gian thực (Magnifier Loupe) và ràng buộc hình học lồi nghiêm ngặt (đường viền luôn thẳng tuyệt đối).
+3. **Nắn phẳng phối cảnh & khử uốn cong (Perspective & Coons Patch Mesh Warp)**:
+   - Áp dụng phép biến đổi phối cảnh 4 điểm (Homography) và lưới nội suy Coons Patch Mesh Warp khử hoàn toàn hiện tượng méo do góc chụp nghiêng hoặc trang sách bị gồ lên.
+   - Nội suy Lanczos-4 duy trì độ sắc nét tối đa của các nét chữ viết tay và chi tiết nhỏ.
+4. **Bộ lọc nâng cao chất lượng bản scan (Intelligent Document Enhancement)**:
+   - **✨ Scan thông minh (Magic Color)**: Cân bằng chiếu sáng vĩ mô (Macro Illumination Leveling), khử sạch bóng râm, làm trắng tinh nền giấy ($255$) mà vẫn giữ nguyên màu mực tự nhiên.
+   - **🖋️ Scan xám mịn (Magic Gray)**: Chống răng cưa nét chữ, phù hợp lưu trữ tài liệu in ấn văn bản hành chính.
+   - **📄 Scan đen trắng (B&W High-Contrast)**: Thuật toán thích nghi Gaussian kết hợp lọc hình thái học hai pha, tối ưu hóa cho nhận diện OCR.
+   - **🖼️ Màu nguyên bản nắn phẳng (Color Deskewed)**: Giữ nguyên dải màu ảnh gốc sau khi nắn thẳng.
+5. **Đa dạng phương thức đầu vào (Input Modalities)**:
+   - **Camera / Webcam trực tiếp**: Chụp tức thời trên giao diện web hoặc cửa sổ OpenCV preview full HD với phím tắt `SPACE`.
+   - **Tải ảnh lên (Upload)**: Hỗ trợ đa dạng định dạng (`.jpg`, `.jpeg`, `.png`, `.webp`, `.bmp`).
+   - **Ảnh mẫu có sẵn (Sample Dataset)**: Thử nghiệm nhanh với 5 mẫu tài liệu thực tế trong thư mục `documents/sample/`.
+6. **Tái tạo tài liệu thông minh bằng AI (Gemini 2.5 Flash Vision DOCX Reconstruction)**:
+   - AI đọc hiểu trực quan cấu trúc tài liệu từ ảnh scan.
+   - Tái tạo thành file Word `.docx` chuẩn gồm tiêu đề các cấp (Heading 1/2/3), đoạn văn thụt lề, bảng biểu (Tables) có kẻ viền và đổ màu tiêu đề, danh sách (Bullet Lists) và mô tả sơ đồ/hình ảnh — **không phải chèn ảnh thô vào Word**.
+7. **Trích xuất chữ OCR truyền thống**:
+   - Hỗ trợ Windows Native OCR (`winocr`) ngoại tuyến, bảo mật và tốc độ cao.
+   - Cơ chế fallback linh hoạt sang `easyocr` hoặc `pytesseract` cho tiếng Việt và tiếng Anh.
+8. **Chuyển đổi Word (.docx) sang PDF (.pdf) 1-click**:
+   - Tận dụng Microsoft Word COM Automation trên Windows để xuất PDF đạt độ tương thích 100% về font chữ, căn lề và định dạng trang in ấn chuẩn A4.
+
+---
+
+## 🏗️ Kiến Trúc Hệ Thống & Quy Trình Xử Lý
 
 ```mermaid
 flowchart TD
-    A["Raw Input Image<br/>(Webcam / Upload / Dataset)"] --> B["Preprocessing<br/>(Resize, Grayscale, CLAHE, Canny, Morphology)"]
-    B --> C["Contour Analysis & Scoring<br/>(Convexity, Angles, Area, Aspect Ratio)"]
-    C --> D["4-Point Perspective Transform<br/>(Deskew & Flatten Document)"]
-    D --> E["Scanned Enhancement<br/>(Adaptive Gaussian Thresholding + Morph Filter)"]
+    A["Ảnh Đầu Vào<br/>(Camera / Tải lên / documents/sample)"] --> B["Tiền Xử Lý Đa Kênh<br/>(Resize, LAB Luminance, Canny Adaptive, Otsu, HSV)"]
+    B --> C["Nhận Diện & Chấm Điểm Viền<br/>(Convexity, Corner Angles, Edge Support, Paper Purity)"]
     
-    E --> F1["Export to PDF (.pdf)<br/>Standard A4 150 DPI"]
-    E --> F2["Export to Word (.docx)<br/>Centered A4 Image Layout"]
+    C --> D{"Chế Độ Căn Chỉnh?"}
+    D -- "Tự Động (Auto)" --> E1["Nắn Phẳng Coons Patch Mesh<br/>(Khử uốn cong 6/8/12 điểm neo)"]
+    D -- "Chỉnh Tay (Manual Editor)" --> E2["Nắn Phẳng Phối Cảnh 4 Điểm<br/>(Interactive HTML5 Canvas Drag)"]
     
-    D --> G["OCR Text Recognition<br/>(Windows Native winocr / easyocr / tesseract)"]
-    G --> F3["Export to Word (.docx)<br/>Editable Formatted Text"]
+    E1 --> F["Tăng Cường Ảnh Scan<br/>(Macro Illumination Leveling + DoG Filter)"]
+    E2 --> F
     
-    F2 --> H["Word COM Automation<br/>(DOCX to PDF Conversion)"]
-    F3 --> H
-    H --> F4["Converted PDF (.pdf)<br/>100% Format Preservation"]
+    F --> G1["Xuất File PDF (.pdf)<br/>Khổ A4 Chuẩn 150 DPI"]
+    F --> G2["Xuất File Word (.docx)<br/>Layout Ảnh Quét Căn Giữa"]
+    F --> G3["Gemini 2.5 Flash AI Vision<br/>(Phân tích cấu trúc & ngữ cảnh)"]
+    F --> G4["Windows Native OCR (winocr)<br/>(Trích xuất text thô ngoại tuyến)"]
+    
+    G3 --> H1["Tạo Word Tái Tạo (.docx)<br/>Heading, Bảng, Danh sách"]
+    G4 --> H2["Tạo Word Văn Bản (.docx)"]
+    
+    H1 --> I["Microsoft Word COM Engine<br/>(Chuyển đổi DOCX sang PDF)"]
+    H2 --> I
+    I --> J["File PDF Hoàn Chỉnh (.pdf)<br/>Chuẩn In Ấn 100% Font & Lề"]
 ```
 
 ---
 
-## 📁 Project Structure
+## 📁 Cấu Trúc Thư Mục Dự Án
 
 ```
 document-scanner/
-├── app.py                      # Streamlit interactive Web UI application
-├── run_app.bat                 # Windows 1-click launcher script
-├── requirements.txt            # Python package dependencies
-├── README.md                   # Project documentation & user guide
+├── app.py                      # Ứng dụng Web UI tương tác Streamlit
+├── run_app.bat                 # Script chạy nhanh 1-click trên Windows
+├── requirements.txt            # Danh sách thư viện Python cần cài đặt
+├── README.md                   # Tài liệu hướng dẫn sử dụng tiếng Việt
+├── .env                        # File cấu hình biến môi trường (Gemini API Key)
+├── .gitignore                  # Cấu hình bỏ qua các file tạm/cache
 ├── documents/
-│   └── raw/                    # Test images & GNHK sample dataset
-│       ├── base.jpg
-│       ├── diagonal_view.jpg
-│       ├── GNHK_fail.jpg
-│       ├── GNHK_success.jpg
-│       └── redlight.jpg
-├── outputs/                    # Default destination for scanned files and logs
+│   └── sample/                 # 5 ảnh mẫu kiểm thử nghiệm thực tế
+│       ├── sample1.jpg         # Tài liệu cơ bản (base document)
+│       ├── sample2.jpg         # Chụp nghiêng góc phối cảnh mạnh (diagonal)
+│       ├── sample3.jpg         # Mẫu khó: giấy viền mờ / phức tạp (fail-case ban đầu)
+│       ├── sample4.jpg         # Vở kẻ ô uốn cong thực tế từ GNHK dataset
+│       └── sample5.jpg         # Chụp dưới ánh sáng phức tạp / bóng đỏ
+├── outputs/                    # Thư mục chứa kết quả xuất scan, debug, logs
 │   ├── .gitkeep
 │   └── reference/
-│       └── debug/              # Benchmark evaluation logs and debug visual artifacts
-│           └── eval/
-│               ├── detection_log.csv
-│               ├── debug_all/
-│               └── multi_scan/
-├── scripts/                    # Command-line interface (CLI) execution scripts
+│       └── debug/              # Artifacts trực quan và log đánh giá benchmark
+├── scripts/                    # Các kịch bản chạy dòng lệnh (CLI Tools)
 │   ├── __init__.py
-│   ├── capture_scan.py         # Live webcam capture & document scanner
-│   ├── convert_docx_to_pdf.py  # Standalone DOCX to PDF COM converter
-│   ├── multi_img_test.py       # Batch evaluation across directories with metrics
-│   ├── ocr_test.py             # OCR text extraction and editable DOCX generator
-│   └── single_img_test.py      # Single-image scanner with PDF/DOCX export
-└── src/                        # Core algorithms and helper modules
+│   ├── capture_scan.py         # Quét trực tiếp từ webcam qua phím SPACE
+│   ├── convert_docx_to_pdf.py  # Chuyển đổi DOCX sang PDF độc lập qua COM
+│   ├── multi_img_test.py       # Đánh giá hàng loạt (batch) và ghi log CSV
+│   ├── ocr_test.py             # Trích xuất OCR text ra file Word (.docx)
+│   └── single_img_test.py      # Quét 1 ảnh đơn lẻ và xuất PDF/Word
+└── src/                        # Các module xử lý thuật toán cốt lõi
     ├── __init__.py
-    ├── camera.py               # Webcam device handler with OpenCV preview
-    ├── converter.py            # Windows Microsoft Word COM automation converter
-    ├── detect_page.py          # Contour detection, candidate scoring & point ordering
-    ├── export.py               # Multi-image PDF and Word DOCX exporter
-    ├── io_handling.py          # File I/O, image loading, and directory utilities
-    ├── ocr_engine.py           # Multi-engine OCR recognizer and DOCX formatter
-    ├── preprocess.py           # Dimension normalization, grayscale, CLAHE, edges
-    ├── thresholding.py         # Adaptive thresholding and morphological cleanup
-    └── transform.py            # 4-point perspective warp and homography deskewing
+    ├── ai_docx_builder.py      # Bộ dựng tài liệu Word cấu trúc từ JSON AI
+    ├── camera.py               # Quản lý thiết bị webcam và hiển thị preview
+    ├── converter.py            # Tự động hóa Microsoft Word COM trên Windows
+    ├── detect_page.py          # Thuật toán nhận diện viền trang và chấm điểm
+    ├── export.py               # Xuất PDF và Word A4 từ danh sách ảnh
+    ├── gemini_ocr.py           # Tích hợp Google Gemini 2.5 Flash Vision API
+    ├── geometry.py             # Tính toán giao điểm, kiểm tra tính lồi, dịch cạnh
+    ├── io_handling.py          # Đọc/ghi ảnh và tạo thư mục an toàn
+    ├── ocr_engine.py           # Động cơ OCR Windows / EasyOCR / Tesseract
+    ├── preprocess.py           # Chuẩn hóa kích thước, lọc sáng CLAHE, Canny
+    ├── quad_editor.py          # Cầu nối component Streamlit Custom Quad Editor
+    ├── thresholding.py         # Lọc Magic Color, Magic Gray, Adaptive B&W
+    ├── transform.py            # Biến đổi phối cảnh & lưới Coons Patch Mesh
+    └── components/
+        └── quad_editor/
+            └── index.html      # Mã nguồn HTML5 Canvas chỉnh tay tương tác
 ```
 
 ---
 
-## ⚙️ Installation & Requirements
+## ⚙️ Môi Trường & Yêu Cầu Hệ Thống
 
-### System Requirements
-- **Operating System**: Windows 10 / 11 (recommended for native Windows OCR & Word COM automation).
-- **Python**: Python 3.10+ or Python 3.11+.
-- **Microsoft Office Word**: Required for native `.docx` to `.pdf` COM conversion.
-- **Webcam / Camera**: Optional, required only for live photo capture features.
+### 1. Yêu Cầu Phần Cứng & Hệ Điều Hành
+- **Hệ điều hành**: Windows 10 / Windows 11 (64-bit) — *Bắt buộc đối với tính năng Windows Native OCR (`winocr`) và chuyển đổi file Word qua COM Automation*.
+- **Python**: Khuyến nghị phiên bản **Python 3.10** hoặc **Python 3.11**.
+- **Microsoft Office Word**: Đã cài đặt trên máy (để kích hoạt tính năng chuyển đổi file DOCX sang PDF qua COM).
+- **Webcam / Camera USB**: Tùy chọn (dành cho tính năng chụp ảnh scan trực tiếp).
+- **Kết nối Internet**: Cần thiết khi sử dụng tính năng AI Tái Tạo Văn Bản qua **Gemini 2.5 Flash API**.
 
-### Setup Instructions
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Vietcute0210/document-scanner.git
-   cd document-scanner
+### 2. Biến Môi Trường (API Key)
+Để kích hoạt tính năng AI Vision phân tích tài liệu thông minh:
+1. Đăng ký lấy API Key miễn phí tại [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Tạo file `.env` tại thư mục gốc của dự án với nội dung:
+   ```env
+   GEMINI_API_KEY=your_gemini_api_key_here
    ```
-
-2. **Create and activate a virtual environment (recommended):**
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+   *(Hoặc bạn có thể nhập trực tiếp API Key vào thanh Sidebar trên giao diện Web UI).*
 
 ---
 
-## 🚀 Quick Start (Web UI)
+## 📦 Hướng Dẫn Cài Đặt
 
-### Option 1: 1-Click Launch (Windows)
-Double-click `run_app.bat` in the project root directory. The launcher will automatically start Streamlit and open the application in your default web browser.
+### Bước 1: Tải mã nguồn về máy
+```bash
+git clone https://github.com/Vietcute0210/document-scanner.git
+cd document-scanner
+```
 
-### Option 2: Command Line Launch
-Run the following command from the project root:
+### Bước 2: Tạo và kích hoạt môi trường ảo Python
+Sử dụng môi trường ảo giúp cô lập các thư viện:
+```bash
+# Tạo môi trường ảo
+python -m venv .venv
+
+# Kích hoạt môi trường ảo trên Windows PowerShell:
+.venv\Scripts\Activate.ps1
+
+# Hoặc trên Command Prompt (cmd.exe):
+.venv\Scripts\activate.bat
+```
+
+### Bước 3: Cài đặt các thư viện phụ thuộc
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+---
+
+## 🚀 Hướng Dẫn Chạy Ứng Dụng (Lệnh Chạy)
+
+### Cách 1: Khởi động nhanh 1-Click trên Windows
+Nhấp đúp chuột vào file **`run_app.bat`** tại thư mục gốc. Trình duyệt mặc định sẽ tự động mở trang web ứng dụng tại địa chỉ: `http://localhost:8501`.
+
+### Cách 2: Khởi động qua Terminal (Web UI)
+Kích hoạt môi trường ảo và chạy lệnh:
 ```bash
 streamlit run app.py
 ```
-Then navigate to `http://localhost:8501` in your browser.
 
----
+### Cách 3: Sử dụng các công cụ dòng lệnh (CLI Tools)
 
-## 🖥️ Web UI Walkthrough
-
-The Streamlit interface provides two major operational modes accessible from the sidebar:
-
-### 1. Document Scanner & Exporter (`Quét & Xuất Tài Liệu`)
-- **Three Input Methods**:
-  - **Camera Tab**: Capture live snapshots using your connected webcam.
-  - **Upload Tab**: Drag and drop existing images (`.jpg`, `.jpeg`, `.png`, `.webp`, `.bmp`).
-  - **Sample Tab**: Choose from bundled test images in `documents/raw/`.
-- **Customizable Processing Settings**:
-  - **CLAHE Toggle**: Balances uneven illumination and reduces harsh shadows.
-  - **Resolution Slider**: Adjusts detection resizing (`max_dim` from 600px to 2000px).
-  - **Output Style**: Switch between high-contrast black-and-white scan (`B&W`) or flattened full-color image.
-  - **OCR Language**: Select recognition language between English (`en`) and Vietnamese (`vi`).
-- **Visual Inspection**:
-  - **Left Column**: Original image overlaid with detected green polygon boundaries and red corner markers, along with detection method and confidence score.
-  - **Right Column**: Rectified, deskewed, and binarized document preview.
-- **Direct Downloads**:
-  - 📄 **Tải File PDF (.pdf)**: Download high-resolution standardized A4 PDF.
-  - 📝 **Tải File Word (.docx) - Bản Scan**: Download Word document with embedded scanned page layout.
-  - 🔍 **Trích Xuất Chữ (OCR) Ra Word**: Run OCR recognition, preview extracted text directly in an expandable text box, and download an editable `.docx` document.
-
-### 2. Word to PDF Converter (`Chuyển Đổi DOCX sang PDF`)
-- Upload any Microsoft Word `.docx` file.
-- Click **Bắt Đầu Chuyển Đổi Sang PDF** to invoke Microsoft Word COM automation in the background.
-- Download the generated `.pdf` file with 100% preservation of fonts, page geometry, and styles.
-
----
-
-## 💻 Command Line Interface (CLI) Guide
-
-All core capabilities are available through modular CLI scripts:
-
-### 1. Single Image Scan & Multi-Format Export
-Scan a single document image, detect boundaries, deskew, and export to image, PDF, and Word:
+#### 1. Quét một ảnh đơn lẻ và xuất PDF / Word:
 ```bash
-python -m scripts.single_img_test --img documents/raw/base.jpg --outdir outputs/my_scan --pdf --docx
+python -m scripts.single_img_test --img documents/sample/sample1.jpg --outdir outputs/my_scan --pdf --docx
 ```
-- `--img`: Path to input image *(required)*.
-- `--outdir`: Destination directory for debug and output files *(default: outputs/debug/run_one)*.
-- `--max-dim`: Maximum dimension for edge detection *(default: 1200)*.
-- `--clahe`: Enable CLAHE contrast balance for shadowed documents.
-- `--pdf`: Generate `scanned_doc.pdf`.
-- `--docx`: Generate `scanned_doc.docx`.
+- `--img`: Đường dẫn tới ảnh cần quét *(bắt buộc)*.
+- `--outdir`: Thư mục lưu kết quả *(mặc định: outputs/debug/run_one)*.
+- `--max-dim`: Kích thước cạnh dài tối đa khi nhận diện *(mặc định: 1200)*.
+- `--clahe`: Bật cân bằng sáng CLAHE khi ảnh bị sấp bóng tối.
+- `--pdf`: Tự động tạo file `scanned_doc.pdf`.
+- `--docx`: Tự động tạo file `scanned_doc.docx`.
 
-### 2. Live Webcam Capture & Scan
-Open a live camera feed with an instructional overlay. Press `SPACE` to capture a frame and execute the scanning pipeline:
+#### 2. Mở Webcam chụp ảnh và quét tài liệu trực tiếp:
 ```bash
 python -m scripts.capture_scan --outdir outputs/camera_scans --camera 0
 ```
-- `--outdir`: Output directory *(default: outputs/camera_scans)*.
-- `--camera`: Camera device index *(default: 0)*.
-- `--clahe`: Enable CLAHE lighting correction.
-- *Keyboard controls*: `SPACE` = Capture frame; `Q` or `ESC` = Quit preview.
+- Nhấn phím `SPACE` (cách) để chụp và nắn phẳng ngay lập tức.
+- Nhấn `ESC` hoặc `Q` để thoát preview.
 
-### 3. OCR Text Extraction to Editable Word DOCX
-Extract text from any document or scanned image into an editable Word `.docx` file:
+#### 3. Trích xuất chữ bằng OCR ra file Word (.docx) chỉnh sửa được:
 ```bash
-python -m scripts.ocr_test --img documents/raw/base.jpg --out outputs/my_scan/extracted.docx --lang en
+python -m scripts.ocr_test --img documents/sample/sample1.jpg --out outputs/my_scan/extracted.docx --lang vi
 ```
-- `--img`: Path to input image *(required)*.
-- `--out`: Destination `.docx` file path *(optional, defaults to `<name>_ocr.docx`)*.
-- `--lang`: Language code (`en` for English, `vi` for Vietnamese) *(default: en)*.
+- `--lang`: Ngôn ngữ nhận diện (`vi` cho Tiếng Việt, `en` cho Tiếng Anh).
 
-### 4. Standalone DOCX to PDF Conversion
-Convert any Word document to PDF using Microsoft Word COM automation:
+#### 4. Chuyển đổi file DOCX sang PDF bằng Word COM:
 ```bash
 python -m scripts.convert_docx_to_pdf --docx outputs/my_scan/scanned_doc.docx --out outputs/my_scan/final.pdf
 ```
-- `--docx`: Path to input `.docx` file *(required)*.
-- `--out`: Output `.pdf` path *(optional, defaults to same folder with `.pdf` extension)*.
 
-### 5. Batch Image Processing & Evaluation
-Process an entire folder of images, log metrics to CSV, and export all results into combined multi-page PDF and Word documents:
+#### 5. Đánh giá chất lượng hàng loạt trên cả thư mục ảnh (Batch Evaluation):
 ```bash
-python -m scripts.multi_img_test --input documents/raw --outdir outputs/batch_eval --pdf --docx
+python -m scripts.multi_img_test --input documents/sample --outdir outputs/batch_eval --pdf --docx
 ```
-- `--input`: Folder containing input images *(required)*.
-- `--outdir`: Destination directory for logs and outputs *(default: outputs/debug/eval)*.
-- `--save-failures`: Save debug visualization images only for failed detections.
-- `--pdf`: Consolidate all successful scans into `all_scanned.pdf`.
-- `--docx`: Consolidate all successful scans into `all_scanned.docx`.
-- Generates `detection_log.csv` logging method name, confidence score, success flag, foreground ratio, and connected component count.
+- Script tự động tính toán tỷ lệ nhận diện thành công, điểm tin cậy trung bình, tỷ lệ nét mực (`fg_ratio`), số lượng thành phần liên thông (`num_cc`) và lưu vào file `outputs/batch_eval/detection_log.csv`.
 
 ---
 
-## 🔬 Core Algorithms & Technical Pipeline
+## 📊 Đầu Ra Mong Đợi (Expected Outputs)
 
-### 1. Corner Detection & Scoring (`src/detect_page.py`)
-1. **Resolution Normalization**: Input image is downscaled to a fixed `max_dim` (1200px) while maintaining aspect ratio, accelerating edge detection.
-2. **Noise Reduction & Illumination**: Grayscale conversion followed by optional CLAHE (`clipLimit=2.0`, `tileGridSize=(8,8)`) and Gaussian blur ($5 \times 5$).
-3. **Canny Edge Detection & Closing**: Dynamic edge thresholding combined with morphological closing connects fragmented contour lines.
-4. **Candidate Contour Approximation**: Contours are approximated into polygons via `cv2.approxPolyDP` with $\epsilon = 0.02 \times \text{perimeter}$.
-5. **Multi-Factor Scoring Metric**:
-   - **Convexity**: Non-convex candidates are disqualified (`cv2.isContourConvex`).
-   - **Internal Corner Angles**: All 4 interior angles are evaluated; deviations outside $[60^\circ, 120^\circ]$ incur steep penalties.
-   - **Area Ratio**: Rewards quadrilaterals occupying a reasonable proportion of the frame ($15\% - 95\%$).
-   - **Aspect Ratio Penalty**: Compares width/height ratio against standard document ratios.
-   - **Border Proximity**: Penalizes candidate corners clinging to the outer sensor border.
-6. **Point Ordering**: Corners are mathematically ordered clockwise: $[(x_{\text{tl}}, y_{\text{tl}}), (x_{\text{tr}}, y_{\text{tr}}), (x_{\text{br}}, y_{\text{br}}), (x_{\text{bl}}, y_{\text{bl}})]$.
+Sau khi xử lý tài liệu, hệ thống xuất ra các định dạng chuẩn hóa sau:
 
-### 2. Perspective Warping (`src/transform.py`)
-- Target width is computed as $W = \max(\|BR - BL\|, \|TR - TL\|)$.
-- Target height is computed as $H = \max(\|TR - BR\|, \|TL - BL\|)$.
-- Homography matrix is derived via `cv2.getPerspectiveTransform` and applied via `cv2.warpPerspective` to obtain the deskewed rectangular page.
-
-### 3. Scanned Look Thresholding (`src/thresholding.py`)
-- `cv2.adaptiveThreshold` using `ADAPTIVE_THRESH_GAUSSIAN_C` with neighborhood block size 31 and constant subtraction 10.
-- Morphological Opening ($3 \times 3$ kernel) removes isolated background artifacts.
-- Morphological Closing ($3 \times 3$ kernel) solidifies faint characters and broken pen strokes.
-
-### 4. Optical Character Recognition (`src/ocr_engine.py`)
-- Integrates native Windows 10/11 Media OCR (`winocr`) for fast, offline, and high-accuracy recognition.
-- Seamlessly falls back to `easyocr` or `pytesseract` when available.
-- Parses extracted text into structured paragraphs within Microsoft Word documents using Calibri typography and 1-inch margins.
-
-### 5. Document Conversion (`src/converter.py`)
-- Leverages `win32com.client.DispatchEx("Word.Application")` on Windows.
-- Converts `.docx` to `.pdf` via native COM SaveAs2 (`wdFormatPDF = 17`).
-- Implements thread-safe COM memory initialization (`pythoncom.CoInitialize()` and `pythoncom.CoUninitialize()`).
+1. **Bản scan hình ảnh (`.png`)**:
+   - Kích thước chuẩn hóa ($>1600$ px chiều rộng) với tỷ lệ gốc được bảo toàn.
+   - Nền trắng tinh khiết $255$, nét mực nổi khối, rõ nét, không bị răng cưa hay vỡ hạt.
+2. **Tập tin PDF chuẩn A4 (`.pdf`)**:
+   - Độ phân giải in ấn 150 DPI tiêu chuẩn, căn giữa trang hoàn hảo, sẵn sàng cho việc in ấn hoặc đính kèm email hành chính.
+3. **Tập tin Word nhúng ảnh (`.docx`)**:
+   - Trang Word A4 lề chuẩn $0.5$ inch, nhúng toàn bộ ảnh scan vừa vặn khung in.
+4. **Tập tin Word AI tái tạo cấu trúc (`.docx`)**:
+   - Chứa văn bản thật có thể bôi đen, sao chép và chỉnh sửa.
+   - Tiêu đề Heading phân cấp rõ ràng (font chữ Calibri/Times New Roman).
+   - Bảng biểu có ô, cột kẻ lưới (`Table Grid`) chuẩn xác, dòng header được bôi đậm và tô màu nền.
+   - Danh sách gạch đầu dòng căn lề chuẩn Word.
+5. **Tập tin PDF chuyển đổi từ Word COM**:
+   - Giữ nguyên 100% định dạng, phông chữ Unicode, khoảng cách dòng và bảng biểu của tài liệu Word gốc.
 
 ---
 
-## 📊 Dataset & Evaluation
+## 📂 Dữ Liệu Thử Nghiệm & Đường Dẫn Tải Dữ Liệu
 
-This project uses the **GNHK (GoodNotes Handwriting Kollection)** dataset for benchmarking boundary detection and rectification:
-> Lee, A. W. C., Chung, J., & Lee, M. (2021). *GNHK: A Dataset for English Handwriting in the Wild*. ICDAR 2021.
-- Official page: [goodnotes.com/gnhk](https://www.goodnotes.com/gnhk/)
-- GitHub repository: [GoodNotes/GNHK-dataset](https://github.com/GoodNotes/GNHK-dataset)
+### 1. Thư mục ảnh mẫu đi kèm (`documents/sample/`)
+Hệ thống tích hợp sẵn 5 mẫu ảnh đại diện cho các kịch bản khó trong thực tế:
+- **`sample1.jpg`** (`1.45 MB`): Tài liệu in tiêu chuẩn, nền bàn gỗ phẳng.
+- **`sample2.jpg`** (`1.72 MB`): Tài liệu chụp chéo ở góc nghiêng $45^\circ$, độ biến dạng phối cảnh lớn.
+- **`sample3.jpg`** (`130 KB`): Vở viết tay bo góc tròn, viền mờ sát nền (thử thách tách biên).
+- **`sample4.jpg`** (`4.24 MB`): Vở viết tay khổ lớn với mép giấy bị uốn cong hình lòng máng.
+- **`sample5.jpg`** (`1.58 MB`): Tài liệu chụp dưới ánh đèn vàng/đỏ cường độ không đều và bóng đổ phức tạp.
 
-Benchmark evaluation metrics recorded in `outputs/reference/debug/eval/detection_log.csv`:
-- **Success Rate (%)**: Percentage of documents where 4 page corners are accurately detected.
-- **Average Confidence Score**: Composite geometric confidence metric $[0.0, 1.0]$.
-- **Foreground Ratio**: Ink-to-background ratio after adaptive thresholding.
-- **Connected Components**: Number of isolated ink stroke regions detected.
-
----
-
-## 🌿 Git Branch Architecture
-
-The project has been developed with modular feature branches merged into `master`:
-- `feature/export-documents`: PDF and Word DOCX export modules (`src/export.py`).
-- `feature/docx-to-pdf`: Microsoft Word COM automation converter (`src/converter.py`, `scripts/convert_docx_to_pdf.py`).
-- `feature/ocr-text`: OCR text extraction engine and editable DOCX exporter (`src/ocr_engine.py`, `scripts/ocr_test.py`).
-- `feature/camera-capture`: Webcam preview and frame capture (`src/camera.py`, `scripts/capture_scan.py`).
-- `feature/web-ui`: Streamlit graphical user interface (`app.py`).
-- `feature/docs-and-scripts`: Windows 1-click launcher (`run_app.bat`), dependency updates, and comprehensive documentation.
+### 2. Tập dữ liệu quy chuẩn GNHK Dataset
+Dự án được đối chuẩn và thử nghiệm trên tập dữ liệu chuẩn hóa quốc tế:
+- **Tên dataset**: *GNHK: A Dataset for English Handwriting in the Wild* (ICDAR 2021).
+- **Tác giả**: Lee, A. W. C., Chung, J., & Lee, M. (GoodNotes Research).
+- **Đường dẫn trang chủ**: [https://www.goodnotes.com/gnhk/](https://www.goodnotes.com/gnhk/)
+- **Kho lưu trữ GitHub tải dữ liệu**: [https://github.com/GoodNotes/GNHK-dataset](https://github.com/GoodNotes/GNHK-dataset)
 
 ---
 
-## 📝 License & Contributing
+## 🔬 Thuật Toán Cốt Lõi & Đóng Góp Kỹ Thuật
 
-This project is open-source under the MIT License. Contributions, bug reports, and feature requests are welcome via pull requests and issues.
+### 1. Nhận diện viền tài liệu thông minh (`src/detect_page.py`)
+- **Phân đoạn đa kênh**: Kết hợp mặt nạ độ sáng không gian màu CIE LAB, biến đổi Otsu cục bộ, dải màu HSV và lọc Canny thích nghi theo trung vị ảnh.
+- **Hàm chấm điểm đa tiêu chí**:
+  $$Score = 0.22 \cdot S_{area} + 0.24 \cdot S_{contrast} + 0.26 \cdot S_{purity} + 0.14 \cdot S_{edge} + 0.08 \cdot S_{angle} + 0.06 \cdot S_{balance} - P_{border}$$
+  Giúp loại bỏ hoàn toàn các viền giả bên trong trang giấy (như bảng biểu, dòng kẻ vở) hoặc các vật thể ngoại lai nằm sát mép (bàn phím laptop, bàn làm việc).
+
+### 2. Nắn phẳng Coons Patch Mesh Warp (`src/transform.py`)
+- Thay vì chỉ sử dụng ma trận biến đổi phối cảnh $3 \times 3$ thông thường (chỉ làm việc với 4 góc thẳng), thuật toán xây dựng lưới nội suy Coons Patch trên $65 \times 65$ mắt lưới:
+  $$P(u, v) = P_{base}(u, v) + (1-v)\Delta_{top}(u) + v\Delta_{bottom}(u) + (1-u)\Delta_{left}(v) + u\Delta_{right}(v)$$
+  Khử triệt để hiện tượng dòng chữ bị uốn lượn do trang giấy bị gập hoặc uốn cong.
+
+### 3. Tăng cường ảnh Magic Color (`src/thresholding.py`)
+- Mô phỏng cơ chế ức chế bên (Lateral Inhibition) của võng mạc kết hợp lọc bề mặt chiếu sáng vĩ mô (Macro Illumination Leveling percentile 75th).
+- Nâng độ đậm nét chữ bằng hàm đường cong nén phi tuyến tính (Rational Reinhard Tone Curve):
+  $$I_{ink} = \frac{boost \cdot 1.30 \cdot D_{total}}{1.0 + boost \cdot 0.75 \cdot D_{total}}$$
+  Đảm bảo chữ viết tay mảnh hay chữ in mờ đều trở nên đậm nét, trong khi nền giấy đạt độ trắng tuyệt đối $255$.
+
+---
+
+## 📝 Bản Quyền & Giấy Phép (License)
+
+Dự án được phát hành mã nguồn mở dưới giấy phép **MIT License**. Mọi đóng góp, báo lỗi (issue) và yêu cầu kéo (pull request) đều được hoan nghênh.
