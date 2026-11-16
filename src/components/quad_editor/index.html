@@ -14,9 +14,9 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
       background: transparent;
-      color: #0f172a;
+      color: #f1f5f9;
       overflow: hidden;
       padding: 2px;
     }
@@ -24,7 +24,7 @@
     .editor-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 7px;
       width: 100%;
     }
 
@@ -34,10 +34,10 @@
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 8px;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+      background: #111723;
+      border: 1px solid #1e2638;
       border-radius: 8px;
-      padding: 7px 12px;
+      padding: 6px 12px;
       font-size: 13px;
     }
 
@@ -53,7 +53,7 @@
       gap: 6px;
       font-size: 12px;
       font-weight: 500;
-      color: #334155;
+      color: #cbd5e1;
     }
 
     .dot {
@@ -65,19 +65,19 @@
 
     .dot-auto {
       background: #10b981;
-      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
     }
 
     .dot-manual {
       background: #f59e0b;
-      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
     }
 
     .btn {
-      background: #ffffff;
-      color: #334155;
-      border: 1px solid #cbd5e1;
-      padding: 5px 10px;
+      background: #1a2233;
+      color: #cbd5e1;
+      border: 1px solid #27344d;
+      padding: 4px 10px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 500;
@@ -95,9 +95,9 @@
     }
 
     .btn:hover {
-      background: #f8fafc;
-      border-color: #94a3b8;
-      color: #0f172a;
+      background: #243048;
+      border-color: #3b82f6;
+      color: #ffffff;
     }
 
     .btn:active {
@@ -107,8 +107,8 @@
     .canvas-container {
       position: relative;
       width: 100%;
-      background: #090d16;
-      border: 1px solid #1e293b;
+      background: #070a10;
+      border: 1px solid #1e2638;
       border-radius: 8px;
       overflow: hidden;
       display: flex;
@@ -124,7 +124,7 @@
     }
 
     .help-hint {
-      font-size: 11.5px;
+      font-size: 11px;
       color: #64748b;
       display: flex;
       align-items: center;
@@ -176,13 +176,13 @@
         </span>
       </div>
       <div class="toolbar-right">
-        <button id="btnResetAuto" class="btn" title="Khôi phục lại viền tự động phát hiện ban đầu">
+        <button id="btnResetAuto" class="btn" title="Khôi phục lại viền tự động ban đầu">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-          Khôi phục tự động
+          Khôi phục
         </button>
         <button id="btnFullImage" class="btn" title="Mở rộng 4 góc ra toàn bộ mép ảnh">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-          Toàn khung ảnh
+          Toàn khung
         </button>
       </div>
     </div>
@@ -192,7 +192,7 @@
     </div>
 
     <div class="help-hint">
-      <span class="hint-item"><span class="hint-dot-red"></span> Điểm góc đỏ: Chỉnh góc</span>
+      <span class="hint-item"><span class="hint-dot-red"></span> Góc đỏ: Chỉnh góc</span>
       <span class="hint-item"><span class="hint-dot-orange"></span> Điểm cam: Dịch cạnh song song</span>
       <span class="hint-item"><span class="hint-line"></span> Ràng buộc viền thẳng</span>
     </div>
@@ -307,7 +307,7 @@
       isManualEdited = isManual;
       if (isManual) {
         statusDot.className = "dot dot-manual";
-        statusText.textContent = "Chế độ chỉnh tay";
+        statusText.textContent = "Chỉnh tay";
       } else {
         statusDot.className = "dot dot-auto";
         statusText.textContent = "Tự động nhận diện";
@@ -346,7 +346,7 @@
 
       ctx.beginPath();
       ctx.arc(x, y, radius - 2, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(0,0,0,0.18)";
+      ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.restore();
@@ -372,7 +372,7 @@
 
       ctx.drawImage(baseImg, srcX, srcY, srcW, srcH, magX, magY, magSize, magSize);
 
-      ctx.strokeStyle = "rgba(239, 68, 68, 0.9)";
+      ctx.strokeStyle = "rgba(239, 68, 68, 0.95)";
       ctx.lineWidth = 1.5;
       const cx = magX + magSize / 2;
       const cy = magY + magSize / 2;
@@ -401,7 +401,7 @@
 
       // 2. Dim outside quadrilateral
       ctx.save();
-      ctx.fillStyle = "rgba(9, 13, 22, 0.50)";
+      ctx.fillStyle = "rgba(5, 8, 14, 0.62)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Cut out interior
@@ -424,7 +424,7 @@
       }
       ctx.closePath();
       ctx.strokeStyle = "#10b981";
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 2.8;
       ctx.lineJoin = "round";
       ctx.stroke();
       ctx.restore();
@@ -688,7 +688,7 @@
           }
 
           render();
-          setFrameHeight(wrapper.offsetHeight + 16);
+          setFrameHeight(wrapper.offsetHeight + 14);
         };
 
         baseImg.src = args.image;
