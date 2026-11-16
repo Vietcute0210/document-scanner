@@ -1,7 +1,7 @@
 """
 Streamlit Web UI for Document Scanner & Converter Studio.
-Threads Dark Theme: Warm charcoal & monochrome minimalism,
-ultra-high contrast typography, and distraction-free document workflow.
+Minimalist, high-contrast dark workspace: balanced 2-column layout,
+stable dimensions, and professional document digitizing pipeline.
 """
 
 import hashlib
@@ -183,7 +183,7 @@ def convert_docx_bytes_to_pdf_bytes(docx_bytes: bytes) -> bytes:
     return pdf_bytes
 
 
-# --- STREAMLIT PAGE CONFIG & THREADS THEME ---
+# --- STREAMLIT PAGE CONFIG & MINIMALIST DARK THEME ---
 
 st.set_page_config(
     page_title="Document Studio",
@@ -192,161 +192,205 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for Meta Threads Dark Aesthetic (Warm Charcoal #101010, Clean Cards #181818, High-Contrast White)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-    /* Global Root - Threads Neutral Charcoal */
+    /* Global Root & Typography */
     html, body, [class*="css"], .stApp {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-        background-color: #101010 !important;
+        background-color: #121212 !important;
         color: #F3F5F7 !important;
     }
 
-    /* Enforce pure bright white headings */
-    h1, h2, h3, h4, h5, h6 {
+    /* Enforce pure bright white headings everywhere - never dark */
+    h1, h2, h3, h4, h5, h6,
+    [data-testid="stMarkdownContainer"] h1,
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3 {
         color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
         font-weight: 700 !important;
         letter-spacing: -0.02em !important;
+        margin: 0 !important;
     }
 
     p, span, label, div {
         color: inherit;
     }
 
+    /* Clean Streamlit Header */
     [data-testid="stHeader"] {
-        background-color: rgba(16, 16, 16, 0.85) !important;
+        background-color: rgba(18, 18, 18, 0.95) !important;
         backdrop-filter: blur(12px) !important;
+        border-bottom: 1px solid #222222 !important;
     }
 
-    /* Threads Sidebar (Deep Dark Charcoal) */
+    /* Sidebar Dark Styling */
     [data-testid="stSidebar"] {
-        background-color: #141414 !important;
-        border-right: 1px solid #222222 !important;
+        background-color: #161616 !important;
+        border-right: 1px solid #262626 !important;
     }
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
     [data-testid="stSidebar"] label {
         color: #D1D5DB !important;
-        font-size: 0.86rem !important;
+        font-size: 0.85rem !important;
+    }
+    .sidebar-section-title {
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.08em !important;
+        text-transform: uppercase !important;
+        color: #888888 !important;
+        -webkit-text-fill-color: #888888 !important;
+        margin: 14px 0 6px 0 !important;
     }
 
-    /* Top Studio Bar (Threads Minimalist Navbar) */
-    .threads-navbar {
+    /* Top Studio Bar */
+    .top-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
-        padding: 9px 16px;
+        padding: 10px 16px;
         background: #181818;
         border: 1px solid #282828;
-        border-radius: 12px;
-        margin-bottom: 12px;
+        border-radius: 8px;
+        margin-bottom: 14px;
     }
-    .brand-group {
-        display: flex;
+    .top-bar-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        letter-spacing: -0.02em;
+        display: inline-flex;
         align-items: center;
         gap: 10px;
     }
-    .brand-title {
-        font-size: 1.35rem;
-        font-weight: 700;
-        color: #FFFFFF !important;
-        letter-spacing: -0.03em;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .brand-title svg {
+    .top-bar-title svg {
         width: 22px;
         height: 22px;
         stroke: #FFFFFF;
     }
-    .brand-badge {
-        font-size: 0.7rem;
-        font-weight: 600;
-        padding: 2px 8px;
-        background: #242424;
-        color: #999999 !important;
-        border-radius: 9999px;
-        border: 1px solid #333333;
-        letter-spacing: 0.04em;
-    }
-    .meta-chip {
+    .top-bar-meta {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: #202020;
-        border: 1px solid #303030;
-        border-radius: 9999px;
-        padding: 4px 12px;
+        background: #222222;
+        border: 1px solid #333333;
+        border-radius: 6px;
+        padding: 5px 12px;
         font-size: 0.82rem;
     }
-    .meta-chip-name {
+    .meta-name {
         font-weight: 600;
         color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
     }
-    .meta-chip-dim {
-        color: #777777 !important;
+    .meta-dim {
+        color: #999999 !important;
+        -webkit-text-fill-color: #999999 !important;
+    }
+    .meta-badge {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 4px;
+        background: #1B2B1B;
+        color: #4ADE80 !important;
+        -webkit-text-fill-color: #4ADE80 !important;
+        border: 1px solid #234E23;
     }
 
-    /* Panel Headers */
+    /* Symmetrical Panel Headers */
     .panel-header {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 600;
         color: #FFFFFF !important;
-        margin-bottom: 8px;
+        -webkit-text-fill-color: #FFFFFF !important;
+        background: #181818;
+        border: 1px solid #282828;
+        border-radius: 8px 8px 0 0;
+        padding: 9px 14px;
+        margin-bottom: 0px;
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
+    .panel-title-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .panel-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #3B82F6;
+        display: inline-block;
+    }
+    .panel-dot-green {
+        background: #10B981;
+    }
+    .panel-badge {
+        font-size: 0.74rem;
+        font-weight: 500;
+        color: #A0A0A0 !important;
+        -webkit-text-fill-color: #A0A0A0 !important;
+        background: #222222;
+        border: 1px solid #303030;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
 
-    /* Status Notes (Threads Card Style) */
+    /* Panel Footer Note */
+    .panel-footer {
+        font-size: 0.78rem;
+        color: #888888 !important;
+        -webkit-text-fill-color: #888888 !important;
+        background: #181818;
+        border: 1px solid #282828;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        padding: 7px 12px;
+        line-height: 1.4;
+    }
+
+    /* Status Notes */
     .status-note {
-        font-size: 0.82rem;
-        padding: 8px 14px;
-        border-radius: 8px;
-        margin-top: 8px;
-        line-height: 1.45;
+        font-size: 0.8rem;
+        padding: 8px 12px;
+        border-radius: 0 0 8px 8px;
+        margin-top: 0px;
+        border: 1px solid #282828;
+        border-top: none;
+        line-height: 1.4;
     }
     .note-auto {
-        background: #141A14 !important;
+        background: #131813 !important;
         color: #4ADE80 !important;
-        border: 1px solid #1E2D1E !important;
+        -webkit-text-fill-color: #4ADE80 !important;
     }
     .note-manual {
-        background: #1C1914 !important;
+        background: #1A1813 !important;
         color: #FBBF24 !important;
-        border: 1px solid #332B1C !important;
+        -webkit-text-fill-color: #FBBF24 !important;
     }
     .note-warn {
-        background: #201414 !important;
+        background: #1F1414 !important;
         color: #F87171 !important;
-        border: 1px solid #381E1E !important;
+        -webkit-text-fill-color: #F87171 !important;
     }
 
-    /* Expander Threads Styling */
-    div[data-testid="stExpander"] {
-        background: #181818 !important;
-        border: 1px solid #282828 !important;
-        border-radius: 12px !important;
-        margin-bottom: 12px !important;
-    }
-    div[data-testid="stExpander"] summary {
-        color: #D1D5DB !important;
-        font-size: 0.85rem !important;
-        font-weight: 500 !important;
-    }
-
-    /* Threads Segmented Pill Selector (Hides Default Radio Circle) */
+    /* Modern Segmented Pill Control (Hides Radio Circles) */
     div[data-testid="stRadio"] > div {
         display: flex !important;
-        background: #181818 !important;
+        flex-direction: row !important;
+        background: #161616 !important;
         border: 1px solid #282828 !important;
-        border-radius: 10px !important;
-        padding: 4px !important;
-        gap: 4px !important;
+        border-radius: 8px !important;
+        padding: 3px !important;
+        gap: 3px !important;
     }
     div[data-testid="stRadio"] label {
         flex: 1 !important;
@@ -355,138 +399,171 @@ st.markdown("""
         justify-content: center !important;
         background: transparent !important;
         color: #888888 !important;
-        border-radius: 7px !important;
-        padding: 6px 12px !important;
-        font-size: 0.83rem !important;
+        -webkit-text-fill-color: #888888 !important;
+        border-radius: 6px !important;
+        padding: 6px 10px !important;
+        font-size: 0.82rem !important;
         font-weight: 500 !important;
         margin: 0 !important;
         cursor: pointer !important;
         transition: all 0.15s ease !important;
     }
-    /* Hide the radio dot */
-    div[data-testid="stRadio"] label > div:first-child {
+    div[data-testid="stRadio"] label > div:first-child,
+    div[data-testid="stRadio"] div[data-testid="stWidgetSelection"],
+    div[data-testid="stRadio"] div[class*="StyledRadio"],
+    div[data-testid="stRadio"] div[role="radio"] > div:first-child {
         display: none !important;
     }
     div[data-testid="stRadio"] label:hover {
         color: #FFFFFF !important;
-        background: rgba(255, 255, 255, 0.06) !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        background: rgba(255, 255, 255, 0.05) !important;
     }
-    /* Active Pill: Crisp White with Black Text like Threads buttons */
     div[data-testid="stRadio"] label[data-checked="true"],
-    div[data-testid="stRadio"] label:has(input:checked) {
-        background: #FFFFFF !important;
-        color: #000000 !important;
+    div[data-testid="stRadio"] label:has(input:checked),
+    div[data-testid="stRadio"] div[aria-checked="true"] {
+        background: #2A2A2A !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
         font-weight: 600 !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-    }
-
-    /* Slider: Monochrome Threads Style (White track & thumb) */
-    div[data-baseweb="slider"] div[role="slider"] {
-        background-color: #FFFFFF !important;
-        border-color: #E5E7EB !important;
+        border: 1px solid #3E3E3E !important;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
     }
-    div[data-baseweb="slider"] > div > div > div {
+
+    /* Monochrome Slider - No Coral Red */
+    div[data-baseweb="slider"] div[role="slider"] {
         background-color: #FFFFFF !important;
+        border: 2px solid #FFFFFF !important;
+        box-shadow: 0 0 6px rgba(255, 255, 255, 0.4) !important;
+        width: 15px !important;
+        height: 15px !important;
+    }
+    div[data-baseweb="slider"] > div > div {
+        background: #2A2A2A !important;
+    }
+    div[data-baseweb="slider"] > div > div > div {
+        background: #FFFFFF !important;
+    }
+    div[data-baseweb="slider"] [data-testid="stThumbValue"] {
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        font-weight: 600 !important;
+        font-size: 0.82rem !important;
     }
 
-    /* Threads Buttons */
+    /* Standard Buttons */
     div.stButton > button {
         background: #222222 !important;
         color: #F3F5F7 !important;
+        -webkit-text-fill-color: #F3F5F7 !important;
         border: 1px solid #333333 !important;
-        border-radius: 9999px !important;
+        border-radius: 8px !important;
         font-size: 0.88rem !important;
         font-weight: 500 !important;
-        padding: 7px 18px !important;
+        padding: 8px 16px !important;
         transition: all 0.15s ease !important;
     }
     div.stButton > button:hover {
         background: #2E2E2E !important;
         border-color: #555555 !important;
         color: #FFFFFF !important;
-        transform: scale(0.99);
+        -webkit-text-fill-color: #FFFFFF !important;
     }
-    /* Signature Threads High-Contrast Primary Button */
     div.stButton > button[kind="primary"] {
         background: #FFFFFF !important;
         color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
         border: 1px solid #FFFFFF !important;
         font-weight: 600 !important;
-        box-shadow: 0 2px 10px rgba(255, 255, 255, 0.15) !important;
     }
     div.stButton > button[kind="primary"]:hover {
-        background: #E8E8E8 !important;
-        border-color: #E8E8E8 !important;
+        background: #E5E5E5 !important;
         color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
     }
 
     /* Download Buttons */
     div.stDownloadButton > button {
-        background: #181818 !important;
+        background: #1C1C1C !important;
         color: #F3F5F7 !important;
-        border: 1px solid #2C2C2C !important;
-        border-radius: 9999px !important;
+        -webkit-text-fill-color: #F3F5F7 !important;
+        border: 1px solid #303030 !important;
+        border-radius: 8px !important;
         font-size: 0.88rem !important;
         font-weight: 500 !important;
-        padding: 7px 18px !important;
+        padding: 8px 16px !important;
         transition: all 0.15s ease !important;
     }
     div.stDownloadButton > button:hover {
-        background: #242424 !important;
-        border-color: #444444 !important;
+        background: #282828 !important;
+        border-color: #555555 !important;
         color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
     }
 
-    /* Output Image Styling */
+    /* Image Display Frame */
     [data-testid="stImage"] img {
-        border-radius: 10px !important;
+        border-radius: 0 0 8px 8px !important;
         border: 1px solid #282828 !important;
+        border-top: none !important;
+        background: #0E0E0E !important;
     }
 
-    /* AI Summary Card (Threads Card) */
-    .ai-card {
-        background: #181818 !important;
-        border: 1px solid #282828 !important;
-        border-radius: 12px !important;
-        padding: 14px 18px !important;
-        margin-top: 10px !important;
+    /* Action Dock */
+    .export-dock {
+        background: #181818;
+        border: 1px solid #282828;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-top: 14px;
     }
-    .ai-card-header {
+    .export-dock-title {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        margin-bottom: 10px;
+    }
+
+    /* AI Card */
+    .ai-box {
+        background: #181818;
+        border: 1px solid #282828;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-top: 12px;
+    }
+    .ai-box-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        margin-bottom: 8px;
     }
-    .ai-card-title {
-        font-weight: 600;
-        font-size: 0.92rem;
-        color: #FFFFFF !important;
-    }
-    .ai-badge-tag {
+    .ai-badge {
         font-size: 0.78rem;
-        color: #D1D5DB !important;
-        background: #222222 !important;
-        border: 1px solid #333333 !important;
-        padding: 3px 10px;
-        border-radius: 9999px;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        background: #262626;
+        border: 1px solid #363636;
+        padding: 2px 8px;
+        border-radius: 6px;
     }
 
-    /* Text Area */
     div[data-testid="stTextArea"] textarea {
         background-color: #141414 !important;
         color: #F3F5F7 !important;
+        -webkit-text-fill-color: #F3F5F7 !important;
         border: 1px solid #282828 !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
         font-size: 0.85rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
 
-# --- SIDEBAR NAVIGATION & SETTINGS ---
+# --- SIDEBAR NAVIGATION & IMAGE SOURCE ---
 
-st.sidebar.markdown("<h3 style='color: #FFFFFF; margin-bottom: 2px;'>Document Studio</h3>", unsafe_allow_html=True)
-st.sidebar.markdown("<p style='color: #777777; font-size: 0.8rem; margin-bottom: 12px;'>Threads Charcoal Dark Edition</p>", unsafe_allow_html=True)
+st.sidebar.markdown("<h3 style='color: #FFFFFF; margin-bottom: 6px;'>Document Studio</h3>", unsafe_allow_html=True)
 
 app_mode = st.sidebar.radio(
     "Chế độ làm việc",
@@ -496,8 +573,60 @@ app_mode = st.sidebar.radio(
 
 st.sidebar.markdown("---")
 
+new_img_detected = None
+new_source_name = None
+
 if app_mode == "Quét tài liệu":
-    st.sidebar.markdown("<h4 style='color: #FFFFFF; font-size: 0.95rem; margin-bottom: 4px;'>Cấu hình AI Vision</h4>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h4 style='color: #FFFFFF; font-size: 0.9rem; margin-bottom: 6px;'>Nguồn tài liệu</h4>", unsafe_allow_html=True)
+    input_source = st.sidebar.radio(
+        "Nguồn ảnh:",
+        ["Ảnh mẫu", "Tải ảnh lên", "Webcam"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+
+    if input_source == "Ảnh mẫu":
+        sample_dir = Path("documents/sample")
+        sample_files = sorted(list(sample_dir.glob("*.jpg")) + list(sample_dir.glob("*.png")))
+        if sample_files:
+            sample_labels = {
+                "sample1.jpg": "Mẫu 1 - Chuẩn in (phẳng)",
+                "sample2.jpg": "Mẫu 2 - Góc nghiêng 45°",
+                "sample3.jpg": "Mẫu 3 - Mép mờ sát nền",
+                "sample4.jpg": "Mẫu 4 - Vở ô ly cong (GNHK)",
+                "sample5.jpg": "Mẫu 5 - Bóng tối phức tạp",
+            }
+            sample_names = [f.name for f in sample_files]
+            selected_sample = st.sidebar.selectbox(
+                "Chọn ảnh mẫu:",
+                sample_names,
+                format_func=lambda x: sample_labels.get(x, x),
+                label_visibility="collapsed"
+            )
+            sample_path = sample_dir / selected_sample
+            new_img_detected = cv2.imread(str(sample_path))
+            new_source_name = Path(selected_sample).stem
+
+    elif input_source == "Tải ảnh lên":
+        uploaded_file = st.sidebar.file_uploader(
+            "Chọn tập tin ảnh tài liệu:",
+            type=["jpg", "jpeg", "png", "webp", "bmp"],
+            label_visibility="collapsed"
+        )
+        if uploaded_file is not None:
+            bytes_data = uploaded_file.getvalue()
+            new_img_detected = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+            new_source_name = Path(uploaded_file.name).stem
+
+    elif input_source == "Webcam":
+        camera_photo = st.sidebar.camera_input("Chụp ảnh webcam", label_visibility="collapsed")
+        if camera_photo is not None:
+            bytes_data = camera_photo.getvalue()
+            new_img_detected = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+            new_source_name = "camera_capture"
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("<h4 style='color: #FFFFFF; font-size: 0.9rem; margin-bottom: 6px;'>Cấu hình AI Vision</h4>", unsafe_allow_html=True)
     ai_model = st.sidebar.selectbox(
         "Mô hình Gemini:",
         ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"],
@@ -548,66 +677,9 @@ else:
     ai_model = "gemini-2.5-flash"
 
 
-# --- MAIN APP ROUTING ---
+# --- MAIN WORKSPACE ---
 
 if app_mode == "Quét tài liệu":
-    new_img_detected = None
-    new_source_name = None
-
-    has_active_image = "raw_cv_img" in st.session_state and st.session_state["raw_cv_img"] is not None
-
-    # Compact Input Expander (auto-collapsed when document is loaded to prevent vertical choke)
-    with st.expander("Thay đổi nguồn ảnh đầu vào", expanded=(not has_active_image)):
-        tab_upload, tab_cam, tab_sample = st.tabs([
-            "Tải ảnh lên",
-            "Chụp từ Camera",
-            "Ảnh mẫu thử nghiệm"
-        ])
-
-        with tab_upload:
-            uploaded_file = st.file_uploader(
-                "Chọn tập tin ảnh tài liệu:",
-                type=["jpg", "jpeg", "png", "webp", "bmp"],
-                help="Hỗ trợ các định dạng ảnh phổ biến"
-            )
-            if uploaded_file is not None:
-                bytes_data = uploaded_file.getvalue()
-                new_img_detected = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-                new_source_name = Path(uploaded_file.name).stem
-
-        with tab_cam:
-            camera_photo = st.camera_input("Chụp ảnh tài liệu qua webcam")
-            if camera_photo is not None:
-                bytes_data = camera_photo.getvalue()
-                new_img_detected = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-                new_source_name = "camera_capture"
-
-        with tab_sample:
-            sample_dir = Path("documents/sample")
-            sample_files = sorted(list(sample_dir.glob("*.jpg")) + list(sample_dir.glob("*.png")))
-            if sample_files:
-                sample_labels = {
-                    "sample1.jpg": "Mẫu 1: Tài liệu in tiêu chuẩn (phẳng)",
-                    "sample2.jpg": "Mẫu 2: Chụp nghiêng góc 45°",
-                    "sample3.jpg": "Mẫu 3: Mép viền mờ sát nền",
-                    "sample4.jpg": "Mẫu 4: Vở kẻ ô cong mép (GNHK)",
-                    "sample5.jpg": "Mẫu 5: Ánh sáng phức tạp & bóng râm",
-                }
-                sample_names = [f.name for f in sample_files]
-                selected_sample = st.selectbox(
-                    "Chọn tài liệu mẫu:",
-                    sample_names,
-                    format_func=lambda x: sample_labels.get(x, x)
-                )
-                if st.button("Tải mẫu này"):
-                    sample_path = sample_dir / selected_sample
-                    new_img_detected = cv2.imread(str(sample_path))
-                    new_source_name = Path(selected_sample).stem
-                elif not has_active_image:
-                    sample_path = sample_dir / sample_names[0]
-                    new_img_detected = cv2.imread(str(sample_path))
-                    new_source_name = Path(sample_names[0]).stem
-
     # Cache loaded image
     if new_img_detected is not None:
         new_hash = hashlib.md5(new_img_detected.tobytes()).hexdigest()
@@ -618,29 +690,20 @@ if app_mode == "Quét tài liệu":
             st.session_state["current_img_hash"] = new_hash
             st.session_state["needs_detection"] = True
 
+    # Fallback to sample1 on fresh launch
+    if "raw_cv_img" not in st.session_state or st.session_state["raw_cv_img"] is None:
+        sample_path = Path("documents/sample/sample1.jpg")
+        if sample_path.exists():
+            st.session_state["raw_cv_img"] = cv2.imread(str(sample_path))
+            st.session_state["source_name"] = "sample1"
+            st.session_state["current_img_hash"] = hashlib.md5(st.session_state["raw_cv_img"].tobytes()).hexdigest()
+            st.session_state["needs_detection"] = True
+
     raw_cv_img = st.session_state.get("raw_cv_img")
     source_name = st.session_state.get("source_name", "document")
 
-    # --- WORKSPACE PIPELINE ---
     if raw_cv_img is not None:
         img_h, img_w = raw_cv_img.shape[:2]
-
-        # Top Threads Navbar with crystal-clear white title & clean chip
-        st.markdown(f"""
-        <div class="threads-navbar">
-          <div class="brand-group">
-            <span class="brand-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3M9 12h6M9 16h6M9 8h6"/></svg>
-              Document Studio
-            </span>
-            <span class="brand-badge">THREADS CHARCOAL</span>
-          </div>
-          <div class="meta-chip">
-            <span class="meta-chip-name">{source_name}</span>
-            <span class="meta-chip-dim">• {img_w} × {img_h} px</span>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
 
         current_detect_params = (max_dim, use_clahe, num_points)
         cached_params = st.session_state.get("last_detect_params")
@@ -676,11 +739,37 @@ if app_mode == "Quét tài liệu":
         active_corners: np.ndarray = st.session_state.get("active_corners")
         is_manual_mode: bool = st.session_state.get("is_manual_mode", False)
 
-        col1, col2 = st.columns([1, 1], gap="medium")
+        mode_desc = "Chỉnh tay (4 góc)" if is_manual_mode else f"Tự động ({len(detection.boundary_points) if detection.boundary_points is not None else 4} điểm neo)"
 
-        # --- COLUMN 1: INTERACTIVE QUAD EDITOR ---
+        # Top Bar (Clean, fixed height, high contrast, pure white branding)
+        st.markdown(f"""
+        <div class="top-bar">
+          <div class="top-bar-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3M9 12h6M9 16h6M9 8h6"/></svg>
+            <span>Document Studio</span>
+          </div>
+          <div class="top-bar-meta">
+            <span class="meta-name">{source_name}</span>
+            <span class="meta-dim">• {img_w} × {img_h} px</span>
+            <span class="meta-badge">{mode_desc}</span>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Equal, Symmetrical Dual-Pane Workspace
+        col1, col2 = st.columns(2, gap="medium")
+
+        # --- COLUMN 1: BOUNDARY EDITOR ---
         with col1:
-            st.markdown('<div class="panel-header"><span>Căn chỉnh viền tài liệu</span></div>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="panel-header">
+              <div class="panel-title-group">
+                <span class="panel-dot"></span>
+                <span>Ảnh gốc & Căn chỉnh viền</span>
+              </div>
+              <span class="panel-badge">{mode_desc}</span>
+            </div>
+            """, unsafe_allow_html=True)
 
             updated_corners, updated_is_manual = render_quad_editor(
                 image_bgr=raw_cv_img,
@@ -697,50 +786,42 @@ if app_mode == "Quét tài liệu":
                 active_corners = updated_corners
                 is_manual_mode = updated_is_manual
 
-            if is_manual_mode:
-                st.markdown(
-                    '<div class="status-note note-manual">Chế độ chỉnh tay: Áp dụng phép biến đổi phối cảnh 4 điểm thẳng.</div>',
-                    unsafe_allow_html=True
-                )
-            elif detection.corners is not None:
-                b_count = len(detection.boundary_points) if detection.boundary_points is not None else 4
-                st.markdown(
-                    f'<div class="status-note note-auto">Tự động phát hiện ({detection.method}, {b_count} điểm neo, độ tin cậy {detection.score:.2f}). Kéo góc để tinh chỉnh.</div>',
-                    unsafe_allow_html=True
-                )
-            else:
-                st.markdown(
-                    '<div class="status-note note-warn">Chưa xác định được viền rõ ràng. Vui lòng kéo 4 điểm góc để định vị văn bản.</div>',
-                    unsafe_allow_html=True
-                )
+            st.markdown(
+                '<div class="panel-footer">💡 Kéo 4 góc đỏ để nắn phối cảnh • Kéo điểm vàng để uốn theo nếp cong</div>',
+                unsafe_allow_html=True
+            )
 
         # --- COLUMN 2: ENHANCED RESULT ---
         with col2:
-            st.markdown('<div class="panel-header"><span>Bản quét hoàn thiện</span></div>', unsafe_allow_html=True)
+            st.markdown("""
+            <div class="panel-header">
+              <div class="panel-title-group">
+                <span class="panel-dot panel-dot-green"></span>
+                <span>Bản scan hoàn thiện</span>
+              </div>
+              <span class="panel-badge">Xử lý tự động</span>
+            </div>
+            """, unsafe_allow_html=True)
 
-            filter_options = [
-                "Màu thông minh",
-                "Xám mịn",
-                "Đen trắng",
-                "Màu gốc"
-            ]
-            filter_mode = st.radio(
-                "Bộ lọc ảnh",
-                filter_options,
-                index=0,
-                horizontal=True,
-                label_visibility="collapsed"
-            )
-
-            contrast_boost = 2.2
-            if filter_mode != "Màu gốc":
+            # Compact single-row control strip: Filter pills + Ink boost slider
+            ctrl_col1, ctrl_col2 = st.columns([1.4, 1.0], gap="small")
+            with ctrl_col1:
+                filter_mode = st.radio(
+                    "Bộ lọc ảnh",
+                    ["Màu thông minh", "Xám mịn", "Đen trắng", "Màu gốc"],
+                    index=0,
+                    horizontal=True,
+                    label_visibility="collapsed"
+                )
+            with ctrl_col2:
                 contrast_boost = st.slider(
-                    "Độ đậm nét chữ (Ink Boost):",
+                    "Độ đậm nét chữ (Ink Boost)",
                     min_value=1.0,
                     max_value=4.0,
                     value=2.2,
                     step=0.2,
-                    help="Tăng nếu nét chữ bị nhạt hoặc phòng quá sáng"
+                    label_visibility="collapsed",
+                    help="Độ đậm nét chữ (Ink Boost): 1.0 - 4.0"
                 )
 
             # Warp processing
@@ -753,14 +834,16 @@ if app_mode == "Quét tài liệu":
                     warped = four_point_transform(raw_cv_img, active_corners)
 
             if warped is not None:
+                boost_to_apply = contrast_boost if filter_mode != "Màu gốc" else 1.0
+
                 if filter_mode == "Màu thông minh":
-                    final_img = magic_color_document(warped, contrast_boost=contrast_boost)
+                    final_img = magic_color_document(warped, contrast_boost=boost_to_apply)
                     display_rgb = cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB)
                 elif filter_mode == "Xám mịn":
-                    final_img = magic_gray_document(warped, contrast_boost=contrast_boost)
+                    final_img = magic_gray_document(warped, contrast_boost=boost_to_apply)
                     display_rgb = cv2.cvtColor(final_img, cv2.COLOR_GRAY2RGB)
                 elif filter_mode == "Đen trắng":
-                    final_img = thresh_document(warped, contrast_boost=contrast_boost)
+                    final_img = thresh_document(warped, contrast_boost=boost_to_apply)
                     display_rgb = cv2.cvtColor(final_img, cv2.COLOR_GRAY2RGB)
                 else:
                     final_img = warped
@@ -768,44 +851,43 @@ if app_mode == "Quét tài liệu":
 
                 st.image(display_rgb, use_container_width=True)
                 final_h, final_w = final_img.shape[:2]
+                transform_label = "Phối cảnh 4 góc" if is_manual_mode else "Lưới Coons Patch khử uốn cong"
                 st.markdown(
-                    f'<div style="text-align: center; color: #777777; font-size: 0.78rem; margin-top: 5px;">{final_w} × {final_h} px • {"Phối cảnh 4 góc" if is_manual_mode else "Lưới Coons Patch khử uốn cong"}</div>',
+                    f'<div class="panel-footer" style="text-align: center;">{final_w} × {final_h} px • {transform_label}</div>',
                     unsafe_allow_html=True
                 )
 
-        # --- EXPORT & RECONSTRUCTION DOCK ---
-        st.markdown('<div class="panel-header" style="margin-top: 16px;"><span>Xuất bản tài liệu</span></div>', unsafe_allow_html=True)
+        # --- EXPORT & AI ACTION DOCK ---
+        st.markdown('<div class="export-dock"><div class="export-dock-title">XUẤT BẢN TÀI LIỆU</div></div>', unsafe_allow_html=True)
 
-        exp_col1, exp_col2, exp_col3 = st.columns(3)
+        exp_col1, exp_col2, exp_col3 = st.columns(3, gap="small")
 
         # 1. Download PDF
         with exp_col1:
             pdf_bytes = generate_pdf_bytes(final_img)
             st.download_button(
-                label="Tải File PDF (.pdf)",
+                label="Xuất file PDF (A4)",
                 data=pdf_bytes,
                 file_name=f"{source_name}_scanned.pdf",
                 mime="application/pdf",
                 use_container_width=True
             )
-            st.caption("Khổ A4 chuẩn in ấn")
 
-        # 2. Download DOCX Image Layout
+        # 2. Download DOCX Layout
         with exp_col2:
             docx_layout_bytes = generate_docx_bytes(final_img, title=f"Tài Liệu - {source_name}")
             st.download_button(
-                label="Tải File Word (.docx)",
+                label="Xuất file Word (.docx)",
                 data=docx_layout_bytes,
                 file_name=f"{source_name}_scanned.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 use_container_width=True
             )
-            st.caption("Nhúng trang scan vào Word")
 
         # 3. AI Smart Reconstruction
         with exp_col3:
             ai_key_to_use = st.session_state.get("gemini_api_key_input", "")
-            if st.button("Tái tạo văn bản bằng AI", type="primary", use_container_width=True, help="Tái tạo lại văn bản, bảng biểu, danh sách thành file Word thật sự"):
+            if st.button("Tái tạo văn bản bằng AI", type="primary", use_container_width=True, help="Tái tạo lại văn bản, bảng biểu, danh sách thành file Word thật sự qua Gemini"):
                 with st.spinner(f"Đang phân tích cấu trúc qua {ai_model}..."):
                     ai_text, ai_docx, ai_data = perform_ai_ocr_and_export_docx(
                         final_img,
@@ -817,18 +899,8 @@ if app_mode == "Quét tài liệu":
                 st.session_state["ai_docx"] = ai_docx
                 st.session_state["ai_data"] = ai_data
 
-            if "ai_docx" in st.session_state and st.session_state["ai_docx"]:
-                st.download_button(
-                    label="Tải Word Tái Tạo Bởi AI",
-                    data=st.session_state["ai_docx"],
-                    file_name=f"{source_name}_reconstructed.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True
-                )
-            st.caption(f"Tái tạo cấu trúc qua {ai_model}")
-
-        # AI Result Summary (Threads Card)
-        if "ai_text" in st.session_state and st.session_state["ai_text"]:
+        # AI Result Summary (Clean, fixed scroll container)
+        if "ai_docx" in st.session_state and st.session_state["ai_docx"]:
             ai_data = st.session_state.get("ai_data", {})
             blocks = ai_data.get("blocks", [])
 
@@ -840,28 +912,35 @@ if app_mode == "Quét tài liệu":
             structure_desc = f"{h_count} tiêu đề • {p_count} đoạn văn • {t_count} bảng dữ liệu • {l_count} danh sách"
 
             st.markdown(f"""
-            <div class="ai-card">
-              <div class="ai-card-header">
-                <span class="ai-card-title">Cấu trúc tài liệu tái tạo</span>
-                <span class="ai-badge-tag">{structure_desc}</span>
+            <div class="ai-box">
+              <div class="ai-box-header">
+                <span style="font-weight: 600; color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important;">Cấu trúc tài liệu tái tạo bởi AI</span>
+                <span class="ai-badge">{structure_desc}</span>
               </div>
             </div>
             """, unsafe_allow_html=True)
 
-            with st.expander("Xem nội dung chi tiết bản thảo", expanded=True):
-                st.text_area("Nội dung tài liệu:", value=st.session_state["ai_text"], height=200, label_visibility="collapsed")
+            ai_dl1, ai_dl2 = st.columns([1, 2], gap="small")
+            with ai_dl1:
+                st.download_button(
+                    label="Tải file Word (.docx) đã tái tạo",
+                    data=st.session_state["ai_docx"],
+                    file_name=f"{source_name}_ai_reconstructed.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True
+                )
+            with ai_dl2:
+                with st.expander("Xem chi tiết văn bản", expanded=False):
+                    st.text_area("Nội dung tài liệu:", value=st.session_state.get("ai_text", ""), height=150, label_visibility="collapsed")
 
 
 elif app_mode == "Chuyển đổi DOCX sang PDF":
     # Mode 2: Clean DOCX to PDF Converter
     st.markdown("""
-    <div class="threads-navbar">
-      <div class="brand-group">
-        <span class="brand-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          Chuyển Đổi DOCX sang PDF
-        </span>
-        <span class="brand-badge">WORD COM ENGINE</span>
+    <div class="top-bar">
+      <div class="top-bar-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Chuyển Đổi DOCX sang PDF
       </div>
     </div>
     """, unsafe_allow_html=True)
@@ -874,9 +953,9 @@ elif app_mode == "Chuyển đổi DOCX sang PDF":
     if upload_word is not None:
         file_size_kb = upload_word.size / 1024
         st.markdown(f"""
-        <div class="meta-chip" style="margin-bottom: 12px;">
-          <span class="meta-chip-name">{upload_word.name}</span>
-          <span class="meta-chip-dim">({file_size_kb:.1f} KB) • Sẵn sàng chuyển đổi</span>
+        <div class="top-bar-meta" style="margin-bottom: 12px;">
+          <span class="meta-name">{upload_word.name}</span>
+          <span class="meta-dim">({file_size_kb:.1f} KB) • Sẵn sàng chuyển đổi</span>
         </div>
         """, unsafe_allow_html=True)
 

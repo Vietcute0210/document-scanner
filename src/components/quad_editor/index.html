@@ -24,21 +24,21 @@
     .editor-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 7px;
       width: 100%;
     }
 
-    /* Threads-style neutral dark gray toolbar */
+    /* Charcoal dark toolbar */
     .toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 8px;
-      background: #181818;
+      background: #1A1A1A;
       border: 1px solid #282828;
-      border-radius: 10px;
-      padding: 7px 12px;
+      border-radius: 8px;
+      padding: 6px 12px;
     }
 
     .toolbar-left, .toolbar-right {
@@ -78,13 +78,13 @@
       color: #F3F5F7;
       border: 1px solid #333333;
       padding: 5px 11px;
-      border-radius: 8px;
+      border-radius: 6px;
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       transition: all 0.15s ease;
     }
 
@@ -95,7 +95,7 @@
     }
 
     .btn:hover {
-      background: #303030;
+      background: #2E2E2E;
       border-color: #555555;
       color: #FFFFFF;
     }
@@ -109,12 +109,11 @@
       width: 100%;
       background: #0E0E0E;
       border: 1px solid #282828;
-      border-radius: 10px;
+      border-radius: 8px;
       overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
 
     canvas {
@@ -200,7 +199,6 @@
   </div>
 
   <script>
-    // --- STREAMLIT PROTOCOL MESSAGING ---
     function sendReady() {
       window.parent.postMessage({
         isStreamlitMessage: true,
@@ -225,7 +223,6 @@
       }, "*");
     }
 
-    // --- GEOMETRY UTILITIES ---
     function lineIntersection(p1, p2, p3, p4) {
       const x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
       const x3 = p3.x, y3 = p3.y, x4 = p4.x, y4 = p4.y;
@@ -272,7 +269,6 @@
       return Math.max(min, Math.min(max, val));
     }
 
-    // --- COMPONENT STATE ---
     const canvas = document.getElementById("editorCanvas");
     const ctx = canvas.getContext("2d");
     const wrapper = document.getElementById("wrapper");
@@ -395,15 +391,12 @@
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 1. Base Image
       ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
 
-      // 2. Dim outside quadrilateral
       ctx.save();
       ctx.fillStyle = "rgba(8, 8, 8, 0.70)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Cut out interior
       ctx.globalCompositeOperation = "destination-out";
       ctx.beginPath();
       ctx.moveTo(corners[0].x, corners[0].y);
@@ -414,7 +407,6 @@
       ctx.fill();
       ctx.restore();
 
-      // 3. Draw straight quad boundary
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(corners[0].x, corners[0].y);
@@ -428,18 +420,15 @@
       ctx.stroke();
       ctx.restore();
 
-      // 4. Draw edge midpoints (Orange dots)
       const mids = getMidpoints();
       for (let i = 0; i < 4; i++) {
         drawHandle(mids[i].x, mids[i].y, "#F59E0B", MID_RADIUS);
       }
 
-      // 5. Draw 4 corner points (Red dots)
       for (let i = 0; i < 4; i++) {
         drawHandle(corners[i].x, corners[i].y, "#EF4444", CORNER_RADIUS);
       }
 
-      // 6. Draw magnifier loupe if actively dragging
       if (activeDrag) {
         let activePos = { x: canvas.width / 2, y: canvas.height / 2 };
         if (activeDrag.type === "corner") {
@@ -451,7 +440,6 @@
       }
     }
 
-    // --- EMIT BACK TO PYTHON ---
     function emitCornersToPython(isManual = true) {
       if (corners.length < 4) return;
       const origCorners = corners.map(pt => [
@@ -466,7 +454,6 @@
       });
     }
 
-    // --- HIT TESTING ---
     function findHitTarget(pos) {
       for (let i = 0; i < 4; i++) {
         const d = Math.hypot(pos.x - corners[i].x, pos.y - corners[i].y);
@@ -503,7 +490,6 @@
       return Math.hypot(p.x - (a.x + t * (b.x - a.x)), p.y - (a.y + t * (b.y - a.y)));
     }
 
-    // --- DRAG LOGIC ---
     function handlePointerDown(e) {
       const pos = getCanvasCoordinates(e);
       const hit = findHitTarget(pos);
@@ -615,7 +601,6 @@
     canvas.addEventListener("pointerup", handlePointerUp);
     canvas.addEventListener("pointercancel", handlePointerUp);
 
-    // --- TOOLBAR BUTTON HANDLERS ---
     btnResetAuto.addEventListener("click", () => {
       if (initialAutoCorners.length === 4) {
         corners = initialAutoCorners.map(p => ({ x: p.x, y: p.y }));
@@ -637,7 +622,6 @@
       emitCornersToPython(true);
     });
 
-    // --- STREAMLIT MESSAGE LISTENER ---
     window.addEventListener("message", (event) => {
       if (event.data.type === "streamlit:render") {
         const args = event.data.args;
@@ -650,9 +634,9 @@
         origW = args.orig_width || 1000;
         origH = args.orig_height || 1000;
 
-        baseImg.onload = () => {
+        function handleImageLoaded() {
           imgLoaded = true;
-          const containerWidth = wrapper.clientWidth || 550;
+          const containerWidth = wrapper.clientWidth || window.innerWidth || 550;
           displayW = Math.min(containerWidth, 800);
           displayH = Math.round((displayW * origH) / origW);
 
@@ -688,9 +672,36 @@
 
           render();
           setFrameHeight(wrapper.offsetHeight + 10);
-        };
+        }
 
-        baseImg.src = args.image;
+        if (baseImg.src === args.image && baseImg.complete && baseImg.naturalWidth > 0) {
+          handleImageLoaded();
+        } else {
+          baseImg.onload = handleImageLoaded;
+          baseImg.src = args.image;
+        }
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (imgLoaded && baseImg.complete) {
+        const containerWidth = wrapper.clientWidth || window.innerWidth || 550;
+        const oldW = displayW;
+        if (oldW > 0 && Math.abs(containerWidth - oldW) > 10) {
+          const newW = Math.min(containerWidth, 800);
+          const newH = Math.round((newW * origH) / origW);
+          const ratio = newW / oldW;
+          corners = corners.map(pt => ({ x: pt.x * ratio, y: pt.y * ratio }));
+          initialAutoCorners = initialAutoCorners.map(pt => ({ x: pt.x * ratio, y: pt.y * ratio }));
+          displayW = newW;
+          displayH = newH;
+          canvas.width = displayW;
+          canvas.height = displayH;
+          scaleX = displayW / origW;
+          scaleY = displayH / origH;
+          render();
+          setFrameHeight(wrapper.offsetHeight + 10);
+        }
       }
     });
 
