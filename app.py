@@ -1,4 +1,4 @@
-"""Paperflow — Document Scanner & Converter, Streamlit presentation entrypoint."""
+"""Document Studio — Document Scanner & Converter Studio."""
 import streamlit as st
 
 from ui.theme import apply_theme
@@ -8,7 +8,7 @@ from ui.pages.scanner import render_scanner
 from ui.pages.converter import render_converter
 
 st.set_page_config(
-    page_title="Paperflow · Document Scanner",
+    page_title="Document Studio",
     page_icon="📄",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -25,5 +25,5 @@ else:
 
 with st.sidebar:
     st.markdown("---")
-    st.caption("Paperflow · Document Scanner")
+    st.caption("Document Studio · Document Scanner")
     st.caption("Image processing powered by OpenCV")
