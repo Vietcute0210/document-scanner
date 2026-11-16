@@ -281,3 +281,38 @@ Dự án được đối chuẩn và thử nghiệm trên tập dữ liệu chu�
 ## 📝 Bản Quyền & Giấy Phép (License)
 
 Dự án được phát hành mã nguồn mở dưới giấy phép **MIT License**. Mọi đóng góp, báo lỗi (issue) và yêu cầu kéo (pull request) đều được hoan nghênh.
+
+---
+
+## UI redesign (Paperflow)
+
+The Streamlit presentation layer has been reorganized into `ui/` while the existing OpenCV detection, geometry, perspective transform, Coons Patch warp, enhancement, OCR and export algorithms remain in `src/`.
+
+```text
+app.py
+ui/
+├── theme.py                 # Hybrid theme: dark navigation + light workspace
+├── components/sidebar.py    # Workspace navigation and settings
+├── pages/
+│   ├── scanner.py           # Upload/sample/camera, editor, preview and export
+│   └── converter.py         # DOCX → PDF workflow
+├── services/documents.py   # PDF/DOCX/AI output orchestration
+└── state/session.py        # Image lifecycle and stale-result invalidation
+src/                        # Existing image-processing and OCR engine
+```
+
+### Run locally
+
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+The DOCX-to-PDF converter still requires Windows and an installed Microsoft Word desktop application because it uses the existing Word COM adapter. Gemini reconstruction requires a valid Google AI Studio API key (provided in the sidebar or environment configuration).
+
+### UI state behavior
+
+- Replacing the source image invalidates detection, edited corners, previews and generated outputs.
+- Changing crop geometry or image enhancement invalidates previously generated PDF/DOCX/AI results.
+- PDF and Word files are generated on explicit user action, not on every Streamlit rerun.
+- The advanced detection controls continue to call the original `detect_page_corners` implementation.
