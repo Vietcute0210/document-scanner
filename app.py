@@ -1,7 +1,7 @@
 """
 Streamlit Web UI for Document Scanner & Converter Studio.
-Professional High-End Dark Studio: clean layout, high-contrast typography,
-modern segmented controls, and AI-powered document reconstruction.
+Threads Dark Theme: Warm charcoal & monochrome minimalism,
+ultra-high contrast typography, and distraction-free document workflow.
 """
 
 import hashlib
@@ -183,7 +183,7 @@ def convert_docx_bytes_to_pdf_bytes(docx_bytes: bytes) -> bytes:
     return pdf_bytes
 
 
-# --- STREAMLIT PAGE CONFIG & HIGH-CONTRAST DARK THEME ---
+# --- STREAMLIT PAGE CONFIG & THREADS THEME ---
 
 st.set_page_config(
     page_title="Document Studio",
@@ -192,56 +192,56 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Comprehensive High-End Dark Studio CSS
+# Custom CSS for Meta Threads Dark Aesthetic (Warm Charcoal #101010, Clean Cards #181818, High-Contrast White)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-    /* Global Typography & Root Dark Background */
+    /* Global Root - Threads Neutral Charcoal */
     html, body, [class*="css"], .stApp {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        background-color: #080b12 !important;
-        color: #f1f5f9 !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        background-color: #101010 !important;
+        color: #F3F5F7 !important;
     }
 
-    /* Enforce pure white headings */
+    /* Enforce pure bright white headings */
     h1, h2, h3, h4, h5, h6 {
-        color: #ffffff !important;
-        font-weight: 600 !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.02em !important;
     }
 
-    /* Enforce legible labels and text */
     p, span, label, div {
         color: inherit;
     }
 
     [data-testid="stHeader"] {
-        background-color: rgba(8, 11, 18, 0.9) !important;
-        backdrop-filter: blur(10px) !important;
+        background-color: rgba(16, 16, 16, 0.85) !important;
+        backdrop-filter: blur(12px) !important;
     }
 
-    /* Sidebar Dark Styling */
+    /* Threads Sidebar (Deep Dark Charcoal) */
     [data-testid="stSidebar"] {
-        background-color: #0d121e !important;
-        border-right: 1px solid #1c2538 !important;
+        background-color: #141414 !important;
+        border-right: 1px solid #222222 !important;
     }
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
     [data-testid="stSidebar"] label {
-        color: #e2e8f0 !important;
+        color: #D1D5DB !important;
         font-size: 0.86rem !important;
     }
 
-    /* Top Studio Bar */
-    .studio-navbar {
+    /* Top Studio Bar (Threads Minimalist Navbar) */
+    .threads-navbar {
         display: flex;
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
         gap: 12px;
-        padding: 8px 14px;
-        background: #0f1523;
-        border: 1px solid #1c263c;
-        border-radius: 10px;
+        padding: 9px 16px;
+        background: #181818;
+        border: 1px solid #282828;
+        border-radius: 12px;
         margin-bottom: 12px;
     }
     .brand-group {
@@ -252,8 +252,8 @@ st.markdown("""
     .brand-title {
         font-size: 1.35rem;
         font-weight: 700;
-        color: #ffffff !important;
-        letter-spacing: -0.025em;
+        color: #FFFFFF !important;
+        letter-spacing: -0.03em;
         display: inline-flex;
         align-items: center;
         gap: 8px;
@@ -261,100 +261,92 @@ st.markdown("""
     .brand-title svg {
         width: 22px;
         height: 22px;
-        stroke: #3b82f6;
+        stroke: #FFFFFF;
     }
     .brand-badge {
-        font-size: 0.68rem;
+        font-size: 0.7rem;
         font-weight: 600;
-        padding: 2px 7px;
-        background: rgba(59, 130, 246, 0.15);
-        color: #60a5fa !important;
+        padding: 2px 8px;
+        background: #242424;
+        color: #999999 !important;
         border-radius: 9999px;
-        border: 1px solid rgba(59, 130, 246, 0.3);
+        border: 1px solid #333333;
         letter-spacing: 0.04em;
     }
     .meta-chip {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
-        background: #141c2c;
-        border: 1px solid #23304a;
-        border-radius: 6px;
-        padding: 4px 10px;
-        font-size: 0.8rem;
-        color: #cbd5e1 !important;
+        gap: 8px;
+        background: #202020;
+        border: 1px solid #303030;
+        border-radius: 9999px;
+        padding: 4px 12px;
+        font-size: 0.82rem;
     }
     .meta-chip-name {
         font-weight: 600;
-        color: #f8fafc !important;
+        color: #FFFFFF !important;
     }
     .meta-chip-dim {
-        color: #64748b !important;
+        color: #777777 !important;
     }
 
-    /* Studio Card Panels */
-    .studio-panel {
-        background: #0d121e;
-        border: 1px solid #1c2538;
-        border-radius: 10px;
-        padding: 12px;
-        height: 100%;
-    }
+    /* Panel Headers */
     .panel-header {
         font-size: 0.95rem;
         font-weight: 600;
-        color: #ffffff !important;
+        color: #FFFFFF !important;
         margin-bottom: 8px;
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
 
-    /* Status Notes */
+    /* Status Notes (Threads Card Style) */
     .status-note {
-        font-size: 0.8rem;
-        padding: 7px 12px;
-        border-radius: 6px;
+        font-size: 0.82rem;
+        padding: 8px 14px;
+        border-radius: 8px;
         margin-top: 8px;
         line-height: 1.45;
     }
     .note-auto {
-        background: #052016 !important;
-        color: #34d399 !important;
-        border: 1px solid #064e3b !important;
+        background: #141A14 !important;
+        color: #4ADE80 !important;
+        border: 1px solid #1E2D1E !important;
     }
     .note-manual {
-        background: #241604 !important;
-        color: #fbbf24 !important;
-        border: 1px solid #78350f !important;
+        background: #1C1914 !important;
+        color: #FBBF24 !important;
+        border: 1px solid #332B1C !important;
     }
     .note-warn {
-        background: #260c0c !important;
-        color: #f87171 !important;
-        border: 1px solid #7f1d1d !important;
+        background: #201414 !important;
+        color: #F87171 !important;
+        border: 1px solid #381E1E !important;
     }
 
-    /* Expander Dark Styling */
+    /* Expander Threads Styling */
     div[data-testid="stExpander"] {
-        background: #0d121e !important;
-        border: 1px solid #1c2538 !important;
-        border-radius: 8px !important;
-        margin-bottom: 10px !important;
+        background: #181818 !important;
+        border: 1px solid #282828 !important;
+        border-radius: 12px !important;
+        margin-bottom: 12px !important;
     }
     div[data-testid="stExpander"] summary {
-        color: #e2e8f0 !important;
+        color: #D1D5DB !important;
         font-size: 0.85rem !important;
         font-weight: 500 !important;
     }
 
-    /* Modern Segmented Pill Control (Hides Radio Circles!) */
+    /* Threads Segmented Pill Selector (Hides Default Radio Circle) */
     div[data-testid="stRadio"] > div {
         display: flex !important;
-        background: #101624 !important;
-        border: 1px solid #1e283c !important;
-        border-radius: 8px !important;
-        padding: 3px !important;
-        gap: 3px !important;
+        background: #181818 !important;
+        border: 1px solid #282828 !important;
+        border-radius: 10px !important;
+        padding: 4px !important;
+        gap: 4px !important;
     }
     div[data-testid="stRadio"] label {
         flex: 1 !important;
@@ -362,103 +354,102 @@ st.markdown("""
         align-items: center !important;
         justify-content: center !important;
         background: transparent !important;
-        color: #94a3b8 !important;
-        border-radius: 6px !important;
-        padding: 5px 10px !important;
-        font-size: 0.82rem !important;
+        color: #888888 !important;
+        border-radius: 7px !important;
+        padding: 6px 12px !important;
+        font-size: 0.83rem !important;
         font-weight: 500 !important;
         margin: 0 !important;
         cursor: pointer !important;
         transition: all 0.15s ease !important;
     }
-    /* Hide the ugly radio circle */
+    /* Hide the radio dot */
     div[data-testid="stRadio"] label > div:first-child {
         display: none !important;
     }
     div[data-testid="stRadio"] label:hover {
-        color: #ffffff !important;
-        background: rgba(255, 255, 255, 0.05) !important;
+        color: #FFFFFF !important;
+        background: rgba(255, 255, 255, 0.06) !important;
     }
+    /* Active Pill: Crisp White with Black Text like Threads buttons */
     div[data-testid="stRadio"] label[data-checked="true"],
     div[data-testid="stRadio"] label:has(input:checked) {
-        background: #2563eb !important;
-        color: #ffffff !important;
+        background: #FFFFFF !important;
+        color: #000000 !important;
         font-weight: 600 !important;
-        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
     }
 
-    /* Electric Blue Slider Styling (Override Streamlit Red) */
+    /* Slider: Monochrome Threads Style (White track & thumb) */
     div[data-baseweb="slider"] div[role="slider"] {
-        background-color: #3b82f6 !important;
-        border-color: #60a5fa !important;
+        background-color: #FFFFFF !important;
+        border-color: #E5E7EB !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
     }
     div[data-baseweb="slider"] > div > div > div {
-        background-color: #3b82f6 !important;
+        background-color: #FFFFFF !important;
     }
 
-    /* Buttons Dark Studio */
+    /* Threads Buttons */
     div.stButton > button {
-        background: #151c2c !important;
-        color: #f1f5f9 !important;
-        border: 1px solid #243048 !important;
-        border-radius: 6px !important;
+        background: #222222 !important;
+        color: #F3F5F7 !important;
+        border: 1px solid #333333 !important;
+        border-radius: 9999px !important;
         font-size: 0.88rem !important;
         font-weight: 500 !important;
-        padding: 6px 14px !important;
+        padding: 7px 18px !important;
         transition: all 0.15s ease !important;
     }
     div.stButton > button:hover {
-        background: #1f293e !important;
-        border-color: #3b82f6 !important;
-        color: #ffffff !important;
-        transform: translateY(-1px);
+        background: #2E2E2E !important;
+        border-color: #555555 !important;
+        color: #FFFFFF !important;
+        transform: scale(0.99);
     }
+    /* Signature Threads High-Contrast Primary Button */
     div.stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-        color: #ffffff !important;
-        border: 1px solid #3b82f6 !important;
-        box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35) !important;
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        border: 1px solid #FFFFFF !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 10px rgba(255, 255, 255, 0.15) !important;
     }
     div.stButton > button[kind="primary"]:hover {
-        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
-        border-color: #60a5fa !important;
+        background: #E8E8E8 !important;
+        border-color: #E8E8E8 !important;
+        color: #000000 !important;
     }
 
     /* Download Buttons */
     div.stDownloadButton > button {
-        background: #111726 !important;
-        color: #e2e8f0 !important;
-        border: 1px solid #1f2b40 !important;
-        border-radius: 6px !important;
+        background: #181818 !important;
+        color: #F3F5F7 !important;
+        border: 1px solid #2C2C2C !important;
+        border-radius: 9999px !important;
         font-size: 0.88rem !important;
         font-weight: 500 !important;
-        padding: 6px 14px !important;
+        padding: 7px 18px !important;
         transition: all 0.15s ease !important;
     }
     div.stDownloadButton > button:hover {
-        background: #1a243a !important;
-        border-color: #3b82f6 !important;
-        color: #ffffff !important;
-    }
-
-    /* Captions */
-    .stCaption, [data-testid="stCaptionContainer"] {
-        color: #64748b !important;
-        font-size: 0.78rem !important;
+        background: #242424 !important;
+        border-color: #444444 !important;
+        color: #FFFFFF !important;
     }
 
     /* Output Image Styling */
     [data-testid="stImage"] img {
-        border-radius: 8px !important;
-        border: 1px solid #1c2538 !important;
+        border-radius: 10px !important;
+        border: 1px solid #282828 !important;
     }
 
-    /* AI Summary Card */
+    /* AI Summary Card (Threads Card) */
     .ai-card {
-        background: #0d121e !important;
-        border: 1px solid #1c2538 !important;
-        border-radius: 8px !important;
-        padding: 12px 16px !important;
+        background: #181818 !important;
+        border: 1px solid #282828 !important;
+        border-radius: 12px !important;
+        padding: 14px 18px !important;
         margin-top: 10px !important;
     }
     .ai-card-header {
@@ -468,24 +459,24 @@ st.markdown("""
     }
     .ai-card-title {
         font-weight: 600;
-        font-size: 0.9rem;
-        color: #ffffff !important;
+        font-size: 0.92rem;
+        color: #FFFFFF !important;
     }
     .ai-badge-tag {
-        font-size: 0.76rem;
-        color: #38bdf8 !important;
-        background: #0c1a29 !important;
-        border: 1px solid #163852 !important;
-        padding: 3px 9px;
-        border-radius: 5px;
+        font-size: 0.78rem;
+        color: #D1D5DB !important;
+        background: #222222 !important;
+        border: 1px solid #333333 !important;
+        padding: 3px 10px;
+        border-radius: 9999px;
     }
 
     /* Text Area */
     div[data-testid="stTextArea"] textarea {
-        background-color: #070a11 !important;
-        color: #e2e8f0 !important;
-        border: 1px solid #1c2538 !important;
-        border-radius: 6px !important;
+        background-color: #141414 !important;
+        color: #F3F5F7 !important;
+        border: 1px solid #282828 !important;
+        border-radius: 8px !important;
         font-size: 0.85rem !important;
     }
 </style>
@@ -494,8 +485,8 @@ st.markdown("""
 
 # --- SIDEBAR NAVIGATION & SETTINGS ---
 
-st.sidebar.markdown("<h3 style='color: #ffffff; margin-bottom: 2px;'>Document Studio</h3>", unsafe_allow_html=True)
-st.sidebar.markdown("<p style='color: #64748b; font-size: 0.8rem; margin-bottom: 12px;'>Phiên bản Pro Studio Dark</p>", unsafe_allow_html=True)
+st.sidebar.markdown("<h3 style='color: #FFFFFF; margin-bottom: 2px;'>Document Studio</h3>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='color: #777777; font-size: 0.8rem; margin-bottom: 12px;'>Threads Charcoal Dark Edition</p>", unsafe_allow_html=True)
 
 app_mode = st.sidebar.radio(
     "Chế độ làm việc",
@@ -506,7 +497,7 @@ app_mode = st.sidebar.radio(
 st.sidebar.markdown("---")
 
 if app_mode == "Quét tài liệu":
-    st.sidebar.markdown("<h4 style='color: #ffffff; font-size: 0.95rem; margin-bottom: 4px;'>Cấu hình AI Vision</h4>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h4 style='color: #FFFFFF; font-size: 0.95rem; margin-bottom: 4px;'>Cấu hình AI Vision</h4>", unsafe_allow_html=True)
     ai_model = st.sidebar.selectbox(
         "Mô hình Gemini:",
         ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"],
@@ -634,15 +625,15 @@ if app_mode == "Quét tài liệu":
     if raw_cv_img is not None:
         img_h, img_w = raw_cv_img.shape[:2]
 
-        # Top Studio Navbar with crystal-clear white title & clean chip
+        # Top Threads Navbar with crystal-clear white title & clean chip
         st.markdown(f"""
-        <div class="studio-navbar">
+        <div class="threads-navbar">
           <div class="brand-group">
             <span class="brand-title">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3M9 12h6M9 16h6M9 8h6"/></svg>
               Document Studio
             </span>
-            <span class="brand-badge">PRO STUDIO</span>
+            <span class="brand-badge">THREADS CHARCOAL</span>
           </div>
           <div class="meta-chip">
             <span class="meta-chip-name">{source_name}</span>
@@ -778,7 +769,7 @@ if app_mode == "Quét tài liệu":
                 st.image(display_rgb, use_container_width=True)
                 final_h, final_w = final_img.shape[:2]
                 st.markdown(
-                    f'<div style="text-align: center; color: #64748b; font-size: 0.78rem; margin-top: 5px;">{final_w} × {final_h} px • {"Phối cảnh 4 góc" if is_manual_mode else "Lưới Coons Patch khử uốn cong"}</div>',
+                    f'<div style="text-align: center; color: #777777; font-size: 0.78rem; margin-top: 5px;">{final_w} × {final_h} px • {"Phối cảnh 4 góc" if is_manual_mode else "Lưới Coons Patch khử uốn cong"}</div>',
                     unsafe_allow_html=True
                 )
 
@@ -836,7 +827,7 @@ if app_mode == "Quét tài liệu":
                 )
             st.caption(f"Tái tạo cấu trúc qua {ai_model}")
 
-        # AI Result Summary (Dark Studio Card)
+        # AI Result Summary (Threads Card)
         if "ai_text" in st.session_state and st.session_state["ai_text"]:
             ai_data = st.session_state.get("ai_data", {})
             blocks = ai_data.get("blocks", [])
@@ -864,7 +855,7 @@ if app_mode == "Quét tài liệu":
 elif app_mode == "Chuyển đổi DOCX sang PDF":
     # Mode 2: Clean DOCX to PDF Converter
     st.markdown("""
-    <div class="studio-navbar">
+    <div class="threads-navbar">
       <div class="brand-group">
         <span class="brand-title">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>

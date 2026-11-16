@@ -14,9 +14,9 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: transparent;
-      color: #f1f5f9;
+      color: #F3F5F7;
       overflow: hidden;
       padding: 0;
     }
@@ -28,16 +28,17 @@
       width: 100%;
     }
 
+    /* Threads-style neutral dark gray toolbar */
     .toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 8px;
-      background: #101522;
-      border: 1px solid #1e273a;
-      border-radius: 8px;
-      padding: 6px 12px;
+      background: #181818;
+      border: 1px solid #282828;
+      border-radius: 10px;
+      padding: 7px 12px;
     }
 
     .toolbar-left, .toolbar-right {
@@ -52,7 +53,7 @@
       gap: 7px;
       font-size: 12px;
       font-weight: 500;
-      color: #cbd5e1;
+      color: #D1D5DB;
     }
 
     .dot {
@@ -63,28 +64,28 @@
     }
 
     .dot-auto {
-      background: #10b981;
-      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+      background: #10B981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
     }
 
     .dot-manual {
-      background: #f59e0b;
-      box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+      background: #F59E0B;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
     }
 
     .btn {
-      background: #182030;
-      color: #e2e8f0;
-      border: 1px solid #27344d;
+      background: #242424;
+      color: #F3F5F7;
+      border: 1px solid #333333;
       padding: 5px 11px;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.15s ease;
     }
 
     .btn svg {
@@ -94,27 +95,26 @@
     }
 
     .btn:hover {
-      background: #222d44;
-      border-color: #3b82f6;
-      color: #ffffff;
-      transform: translateY(-1px);
+      background: #303030;
+      border-color: #555555;
+      color: #FFFFFF;
     }
 
     .btn:active {
-      transform: translateY(0);
+      transform: scale(0.98);
     }
 
     .canvas-container {
       position: relative;
       width: 100%;
-      background: #070a11;
-      border: 1px solid #1e273a;
-      border-radius: 8px;
+      background: #0E0E0E;
+      border: 1px solid #282828;
+      border-radius: 10px;
       overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
 
     canvas {
@@ -126,7 +126,7 @@
 
     .help-hint {
       font-size: 11px;
-      color: #718096;
+      color: #888888;
       display: flex;
       align-items: center;
       gap: 14px;
@@ -144,24 +144,24 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #ef4444;
+      background: #EF4444;
       display: inline-block;
-      border: 1px solid #ffffff;
+      border: 1px solid #FFFFFF;
     }
 
     .hint-dot-orange {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #f59e0b;
+      background: #F59E0B;
       display: inline-block;
-      border: 1px solid #ffffff;
+      border: 1px solid #FFFFFF;
     }
 
     .hint-line {
       width: 12px;
       height: 2.5px;
-      background: #10b981;
+      background: #10B981;
       display: inline-block;
       border-radius: 1px;
     }
@@ -383,7 +383,7 @@
       ctx.beginPath();
       ctx.arc(magX + magSize / 2, magY + magSize / 2, magSize / 2, 0, Math.PI * 2);
       ctx.lineWidth = 3.5;
-      ctx.strokeStyle = "#ffffff";
+      ctx.strokeStyle = "#FFFFFF";
       ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
       ctx.shadowBlur = 10;
       ctx.stroke();
@@ -400,7 +400,7 @@
 
       // 2. Dim outside quadrilateral
       ctx.save();
-      ctx.fillStyle = "rgba(4, 7, 12, 0.68)";
+      ctx.fillStyle = "rgba(8, 8, 8, 0.70)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Cut out interior
@@ -422,7 +422,7 @@
         ctx.lineTo(corners[i].x, corners[i].y);
       }
       ctx.closePath();
-      ctx.strokeStyle = "#10b981";
+      ctx.strokeStyle = "#10B981";
       ctx.lineWidth = 2.8;
       ctx.lineJoin = "round";
       ctx.stroke();
@@ -431,12 +431,12 @@
       // 4. Draw edge midpoints (Orange dots)
       const mids = getMidpoints();
       for (let i = 0; i < 4; i++) {
-        drawHandle(mids[i].x, mids[i].y, "#f59e0b", MID_RADIUS);
+        drawHandle(mids[i].x, mids[i].y, "#F59E0B", MID_RADIUS);
       }
 
       // 5. Draw 4 corner points (Red dots)
       for (let i = 0; i < 4; i++) {
-        drawHandle(corners[i].x, corners[i].y, "#ef4444", CORNER_RADIUS);
+        drawHandle(corners[i].x, corners[i].y, "#EF4444", CORNER_RADIUS);
       }
 
       // 6. Draw magnifier loupe if actively dragging
