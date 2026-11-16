@@ -18,13 +18,13 @@
       background: transparent;
       color: #f1f5f9;
       overflow: hidden;
-      padding: 2px;
+      padding: 0;
     }
 
     .editor-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 8px;
       width: 100%;
     }
 
@@ -34,11 +34,10 @@
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 8px;
-      background: #111723;
-      border: 1px solid #1e2638;
+      background: #101522;
+      border: 1px solid #1e273a;
       border-radius: 8px;
       padding: 6px 12px;
-      font-size: 13px;
     }
 
     .toolbar-left, .toolbar-right {
@@ -50,70 +49,72 @@
     .status-indicator {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
       font-size: 12px;
       font-weight: 500;
       color: #cbd5e1;
     }
 
     .dot {
-      width: 7px;
-      height: 7px;
+      width: 7.5px;
+      height: 7.5px;
       border-radius: 50%;
       display: inline-block;
     }
 
     .dot-auto {
       background: #10b981;
-      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
     }
 
     .dot-manual {
       background: #f59e0b;
-      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
     }
 
     .btn {
-      background: #1a2233;
-      color: #cbd5e1;
+      background: #182030;
+      color: #e2e8f0;
       border: 1px solid #27344d;
-      padding: 4px 10px;
+      padding: 5px 11px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      transition: all 0.15s ease;
+      gap: 6px;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .btn svg {
       width: 13px;
       height: 13px;
-      stroke-width: 2;
+      stroke-width: 2.2;
     }
 
     .btn:hover {
-      background: #243048;
+      background: #222d44;
       border-color: #3b82f6;
       color: #ffffff;
+      transform: translateY(-1px);
     }
 
     .btn:active {
-      transform: scale(0.98);
+      transform: translateY(0);
     }
 
     .canvas-container {
       position: relative;
       width: 100%;
-      background: #070a10;
-      border: 1px solid #1e2638;
+      background: #070a11;
+      border: 1px solid #1e273a;
       border-radius: 8px;
       overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     }
 
     canvas {
@@ -125,7 +126,7 @@
 
     .help-hint {
       font-size: 11px;
-      color: #64748b;
+      color: #718096;
       display: flex;
       align-items: center;
       gap: 14px;
@@ -192,7 +193,7 @@
     </div>
 
     <div class="help-hint">
-      <span class="hint-item"><span class="hint-dot-red"></span> Góc đỏ: Chỉnh góc</span>
+      <span class="hint-item"><span class="hint-dot-red"></span> Góc đỏ: Chỉnh điểm neo</span>
       <span class="hint-item"><span class="hint-dot-orange"></span> Điểm cam: Dịch cạnh song song</span>
       <span class="hint-item"><span class="hint-line"></span> Ràng buộc viền thẳng</span>
     </div>
@@ -224,7 +225,7 @@
       }, "*");
     }
 
-    // --- GEOMETRY UTILITIES (Canvas Space) ---
+    // --- GEOMETRY UTILITIES ---
     function lineIntersection(p1, p2, p3, p4) {
       const x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
       const x3 = p3.x, y3 = p3.y, x4 = p4.x, y4 = p4.y;
@@ -240,7 +241,6 @@
     function isConvex(pts, minArea = 100) {
       if (pts.length !== 4) return false;
 
-      // Shoelace area
       let area = 0;
       for (let i = 0; i < 4; i++) {
         const j = (i + 1) % 4;
@@ -250,7 +250,6 @@
       area = Math.abs(area) * 0.5;
       if (area < minArea) return false;
 
-      // Cross products
       let prevCross = 0;
       for (let i = 0; i < 4; i++) {
         const p0 = pts[i];
@@ -291,16 +290,14 @@
     let scaleX = 1;
     let scaleY = 1;
 
-    // 4 corners in canvas space: [TL, TR, BR, BL]
     let corners = [];
     let initialAutoCorners = [];
     let isManualEdited = false;
     let lastRenderKey = null;
 
-    // Interaction state
     let activeDrag = null;
-    const CORNER_RADIUS = 9;
-    const MID_RADIUS = 7;
+    const CORNER_RADIUS = 9.5;
+    const MID_RADIUS = 7.5;
     const HIT_RADIUS = 26;
 
     function updateBadge(isManual) {
@@ -346,7 +343,7 @@
 
       ctx.beginPath();
       ctx.arc(x, y, radius - 2, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.restore();
@@ -354,8 +351,8 @@
 
     function drawMagnifier(targetX, targetY) {
       if (!imgLoaded) return;
-      const magSize = 130;
-      const zoom = 2.4;
+      const magSize = 135;
+      const zoom = 2.5;
 
       let magX = targetX < canvas.width / 2 ? canvas.width - magSize - 16 : 16;
       let magY = targetY < canvas.height / 2 ? canvas.height - magSize - 16 : 16;
@@ -387,6 +384,8 @@
       ctx.arc(magX + magSize / 2, magY + magSize / 2, magSize / 2, 0, Math.PI * 2);
       ctx.lineWidth = 3.5;
       ctx.strokeStyle = "#ffffff";
+      ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+      ctx.shadowBlur = 10;
       ctx.stroke();
       ctx.restore();
     }
@@ -401,7 +400,7 @@
 
       // 2. Dim outside quadrilateral
       ctx.save();
-      ctx.fillStyle = "rgba(5, 8, 14, 0.62)";
+      ctx.fillStyle = "rgba(4, 7, 12, 0.68)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Cut out interior
@@ -688,7 +687,7 @@
           }
 
           render();
-          setFrameHeight(wrapper.offsetHeight + 14);
+          setFrameHeight(wrapper.offsetHeight + 10);
         };
 
         baseImg.src = args.image;

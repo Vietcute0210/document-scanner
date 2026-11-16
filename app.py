@@ -1,7 +1,7 @@
 """
 Streamlit Web UI for Document Scanner & Converter Studio.
-Professional Dark Studio: high-precision document digitizer,
-boundary editor, enhancement engine, and AI reconstruction studio.
+Professional High-End Dark Studio: clean layout, high-contrast typography,
+modern segmented controls, and AI-powered document reconstruction.
 """
 
 import hashlib
@@ -183,7 +183,7 @@ def convert_docx_bytes_to_pdf_bytes(docx_bytes: bytes) -> bytes:
     return pdf_bytes
 
 
-# --- STREAMLIT PAGE CONFIG & DARK STUDIO THEME ---
+# --- STREAMLIT PAGE CONFIG & HIGH-CONTRAST DARK THEME ---
 
 st.set_page_config(
     page_title="Document Studio",
@@ -192,24 +192,35 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Comprehensive Dark Studio CSS Injection
+# Comprehensive High-End Dark Studio CSS
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-    /* Global Typography & Deep Dark Background */
+    /* Global Typography & Root Dark Background */
     html, body, [class*="css"], .stApp {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        background-color: #090d16 !important;
+        background-color: #080b12 !important;
         color: #f1f5f9 !important;
     }
 
-    [data-testid="stHeader"] {
-        background-color: rgba(9, 13, 22, 0.85) !important;
-        backdrop-filter: blur(8px) !important;
+    /* Enforce pure white headings */
+    h1, h2, h3, h4, h5, h6 {
+        color: #ffffff !important;
+        font-weight: 600 !important;
     }
 
-    /* Sidebar Dark Studio */
+    /* Enforce legible labels and text */
+    p, span, label, div {
+        color: inherit;
+    }
+
+    [data-testid="stHeader"] {
+        background-color: rgba(8, 11, 18, 0.9) !important;
+        backdrop-filter: blur(10px) !important;
+    }
+
+    /* Sidebar Dark Styling */
     [data-testid="stSidebar"] {
         background-color: #0d121e !important;
         border-right: 1px solid #1c2538 !important;
@@ -220,70 +231,91 @@ st.markdown("""
         font-size: 0.86rem !important;
     }
 
-    /* Studio App Header */
-    .studio-header {
+    /* Top Studio Bar */
+    .studio-navbar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 4px 0 10px 0;
-        margin-bottom: 6px;
-        border-bottom: 1px solid #1c2538;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 8px 14px;
+        background: #0f1523;
+        border: 1px solid #1c263c;
+        border-radius: 10px;
+        margin-bottom: 12px;
     }
-    .studio-logo-group {
+    .brand-group {
         display: flex;
         align-items: center;
         gap: 10px;
     }
-    .studio-logo {
-        font-size: 1.4rem;
+    .brand-title {
+        font-size: 1.35rem;
         font-weight: 700;
         color: #ffffff !important;
         letter-spacing: -0.025em;
-    }
-    .studio-badge {
-        font-size: 0.7rem;
-        font-weight: 600;
-        padding: 2px 8px;
-        background: #141c2c;
-        color: #38bdf8 !important;
-        border-radius: 9999px;
-        border: 1px solid #23324d;
-    }
-    .studio-file-chip {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: #111726;
-        border: 1px solid #1e293f;
-        border-radius: 6px;
-        padding: 4px 12px;
-        font-size: 0.82rem;
     }
-    .studio-file-name {
+    .brand-title svg {
+        width: 22px;
+        height: 22px;
+        stroke: #3b82f6;
+    }
+    .brand-badge {
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 2px 7px;
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa !important;
+        border-radius: 9999px;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        letter-spacing: 0.04em;
+    }
+    .meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: #141c2c;
+        border: 1px solid #23304a;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        color: #cbd5e1 !important;
+    }
+    .meta-chip-name {
         font-weight: 600;
         color: #f8fafc !important;
     }
-    .studio-file-dim {
+    .meta-chip-dim {
         color: #64748b !important;
     }
 
-    /* Pane Titles */
-    .pane-title {
+    /* Studio Card Panels */
+    .studio-panel {
+        background: #0d121e;
+        border: 1px solid #1c2538;
+        border-radius: 10px;
+        padding: 12px;
+        height: 100%;
+    }
+    .panel-header {
         font-size: 0.95rem;
         font-weight: 600;
-        color: #f1f5f9 !important;
-        margin-bottom: 6px;
+        color: #ffffff !important;
+        margin-bottom: 8px;
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
 
-    /* Dark Status Notes */
+    /* Status Notes */
     .status-note {
         font-size: 0.8rem;
         padding: 7px 12px;
         border-radius: 6px;
-        margin-top: 6px;
+        margin-top: 8px;
         line-height: 1.45;
     }
     .note-auto {
@@ -304,35 +336,55 @@ st.markdown("""
 
     /* Expander Dark Styling */
     div[data-testid="stExpander"] {
-        background: #0f1523 !important;
+        background: #0d121e !important;
         border: 1px solid #1c2538 !important;
         border-radius: 8px !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 10px !important;
     }
     div[data-testid="stExpander"] summary {
-        color: #cbd5e1 !important;
-        font-size: 0.84rem !important;
+        color: #e2e8f0 !important;
+        font-size: 0.85rem !important;
         font-weight: 500 !important;
     }
 
-    /* Horizontal Radio - Segmented Pill Bar */
+    /* Modern Segmented Pill Control (Hides Radio Circles!) */
     div[data-testid="stRadio"] > div {
-        background: #0f1523;
-        border: 1px solid #1c2538;
-        border-radius: 8px;
-        padding: 4px;
-        gap: 4px;
+        display: flex !important;
+        background: #101624 !important;
+        border: 1px solid #1e283c !important;
+        border-radius: 8px !important;
+        padding: 3px !important;
+        gap: 3px !important;
     }
     div[data-testid="stRadio"] label {
+        flex: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: transparent !important;
         color: #94a3b8 !important;
-        font-size: 0.82rem !important;
-        padding: 4px 10px !important;
         border-radius: 6px !important;
+        padding: 5px 10px !important;
+        font-size: 0.82rem !important;
+        font-weight: 500 !important;
+        margin: 0 !important;
+        cursor: pointer !important;
         transition: all 0.15s ease !important;
+    }
+    /* Hide the ugly radio circle */
+    div[data-testid="stRadio"] label > div:first-child {
+        display: none !important;
     }
     div[data-testid="stRadio"] label:hover {
         color: #ffffff !important;
-        background: #172033 !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+    div[data-testid="stRadio"] label[data-checked="true"],
+    div[data-testid="stRadio"] label:has(input:checked) {
+        background: #2563eb !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4) !important;
     }
 
     /* Electric Blue Slider Styling (Override Streamlit Red) */
@@ -346,9 +398,9 @@ st.markdown("""
 
     /* Buttons Dark Studio */
     div.stButton > button {
-        background: #161e30 !important;
+        background: #151c2c !important;
         color: #f1f5f9 !important;
-        border: 1px solid #27344d !important;
+        border: 1px solid #243048 !important;
         border-radius: 6px !important;
         font-size: 0.88rem !important;
         font-weight: 500 !important;
@@ -356,25 +408,27 @@ st.markdown("""
         transition: all 0.15s ease !important;
     }
     div.stButton > button:hover {
-        background: #202b42 !important;
+        background: #1f293e !important;
         border-color: #3b82f6 !important;
         color: #ffffff !important;
+        transform: translateY(-1px);
     }
     div.stButton > button[kind="primary"] {
-        background: #2563eb !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
         border: 1px solid #3b82f6 !important;
+        box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35) !important;
     }
     div.stButton > button[kind="primary"]:hover {
-        background: #1d4ed8 !important;
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
         border-color: #60a5fa !important;
     }
 
     /* Download Buttons */
     div.stDownloadButton > button {
-        background: #121826 !important;
+        background: #111726 !important;
         color: #e2e8f0 !important;
-        border: 1px solid #1f2a3f !important;
+        border: 1px solid #1f2b40 !important;
         border-radius: 6px !important;
         font-size: 0.88rem !important;
         font-weight: 500 !important;
@@ -382,26 +436,30 @@ st.markdown("""
         transition: all 0.15s ease !important;
     }
     div.stDownloadButton > button:hover {
-        background: #1a2336 !important;
+        background: #1a243a !important;
         border-color: #3b82f6 !important;
         color: #ffffff !important;
     }
 
-    /* Dimension Caption */
-    .doc-dim-caption {
-        font-size: 0.78rem;
+    /* Captions */
+    .stCaption, [data-testid="stCaptionContainer"] {
         color: #64748b !important;
-        text-align: center;
-        margin-top: 5px;
+        font-size: 0.78rem !important;
+    }
+
+    /* Output Image Styling */
+    [data-testid="stImage"] img {
+        border-radius: 8px !important;
+        border: 1px solid #1c2538 !important;
     }
 
     /* AI Summary Card */
     .ai-card {
-        background: #0f1523 !important;
+        background: #0d121e !important;
         border: 1px solid #1c2538 !important;
         border-radius: 8px !important;
-        padding: 12px 14px !important;
-        margin-top: 0.75rem !important;
+        padding: 12px 16px !important;
+        margin-top: 10px !important;
     }
     .ai-card-header {
         display: flex;
@@ -410,25 +468,25 @@ st.markdown("""
     }
     .ai-card-title {
         font-weight: 600;
-        font-size: 0.88rem;
-        color: #f8fafc !important;
+        font-size: 0.9rem;
+        color: #ffffff !important;
     }
     .ai-badge-tag {
         font-size: 0.76rem;
         color: #38bdf8 !important;
         background: #0c1a29 !important;
         border: 1px solid #163852 !important;
-        padding: 2px 8px;
+        padding: 3px 9px;
         border-radius: 5px;
     }
 
     /* Text Area */
     div[data-testid="stTextArea"] textarea {
-        background-color: #070a10 !important;
+        background-color: #070a11 !important;
         color: #e2e8f0 !important;
         border: 1px solid #1c2538 !important;
         border-radius: 6px !important;
-        font-size: 0.84rem !important;
+        font-size: 0.85rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -436,7 +494,9 @@ st.markdown("""
 
 # --- SIDEBAR NAVIGATION & SETTINGS ---
 
-st.sidebar.markdown("### Document Studio")
+st.sidebar.markdown("<h3 style='color: #ffffff; margin-bottom: 2px;'>Document Studio</h3>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='color: #64748b; font-size: 0.8rem; margin-bottom: 12px;'>Phiên bản Pro Studio Dark</p>", unsafe_allow_html=True)
+
 app_mode = st.sidebar.radio(
     "Chế độ làm việc",
     ["Quét tài liệu", "Chuyển đổi DOCX sang PDF"],
@@ -446,7 +506,7 @@ app_mode = st.sidebar.radio(
 st.sidebar.markdown("---")
 
 if app_mode == "Quét tài liệu":
-    st.sidebar.markdown("#### Cấu hình AI Vision")
+    st.sidebar.markdown("<h4 style='color: #ffffff; font-size: 0.95rem; margin-bottom: 4px;'>Cấu hình AI Vision</h4>", unsafe_allow_html=True)
     ai_model = st.sidebar.selectbox(
         "Mô hình Gemini:",
         ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"],
@@ -505,8 +565,8 @@ if app_mode == "Quét tài liệu":
 
     has_active_image = "raw_cv_img" in st.session_state and st.session_state["raw_cv_img"] is not None
 
-    # Compact Input Expander (auto-collapsed when document is loaded)
-    with st.expander("Nguồn ảnh đầu vào", expanded=(not has_active_image)):
+    # Compact Input Expander (auto-collapsed when document is loaded to prevent vertical choke)
+    with st.expander("Thay đổi nguồn ảnh đầu vào", expanded=(not has_active_image)):
         tab_upload, tab_cam, tab_sample = st.tabs([
             "Tải ảnh lên",
             "Chụp từ Camera",
@@ -574,16 +634,19 @@ if app_mode == "Quét tài liệu":
     if raw_cv_img is not None:
         img_h, img_w = raw_cv_img.shape[:2]
 
-        # Top Bar with clean file chip
+        # Top Studio Navbar with crystal-clear white title & clean chip
         st.markdown(f"""
-        <div class="studio-header">
-          <div class="studio-logo-group">
-            <span class="studio-logo">Document Studio</span>
-            <span class="studio-badge">Studio Dark</span>
+        <div class="studio-navbar">
+          <div class="brand-group">
+            <span class="brand-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3M9 12h6M9 16h6M9 8h6"/></svg>
+              Document Studio
+            </span>
+            <span class="brand-badge">PRO STUDIO</span>
           </div>
-          <div class="studio-file-chip">
-            <span class="studio-file-name">{source_name}</span>
-            <span class="studio-file-dim">• {img_w} × {img_h} px</span>
+          <div class="meta-chip">
+            <span class="meta-chip-name">{source_name}</span>
+            <span class="meta-chip-dim">• {img_w} × {img_h} px</span>
           </div>
         </div>
         """, unsafe_allow_html=True)
@@ -626,7 +689,7 @@ if app_mode == "Quét tài liệu":
 
         # --- COLUMN 1: INTERACTIVE QUAD EDITOR ---
         with col1:
-            st.markdown('<div class="pane-title"><span>Căn chỉnh viền tài liệu</span></div>', unsafe_allow_html=True)
+            st.markdown('<div class="panel-header"><span>Căn chỉnh viền tài liệu</span></div>', unsafe_allow_html=True)
 
             updated_corners, updated_is_manual = render_quad_editor(
                 image_bgr=raw_cv_img,
@@ -662,7 +725,7 @@ if app_mode == "Quét tài liệu":
 
         # --- COLUMN 2: ENHANCED RESULT ---
         with col2:
-            st.markdown('<div class="pane-title"><span>Bản quét hoàn thiện</span></div>', unsafe_allow_html=True)
+            st.markdown('<div class="panel-header"><span>Bản quét hoàn thiện</span></div>', unsafe_allow_html=True)
 
             filter_options = [
                 "Màu thông minh",
@@ -715,12 +778,12 @@ if app_mode == "Quét tài liệu":
                 st.image(display_rgb, use_container_width=True)
                 final_h, final_w = final_img.shape[:2]
                 st.markdown(
-                    f'<div class="doc-dim-caption">{final_w} × {final_h} px • {"Phối cảnh 4 góc" if is_manual_mode else "Lưới Coons Patch"}</div>',
+                    f'<div style="text-align: center; color: #64748b; font-size: 0.78rem; margin-top: 5px;">{final_w} × {final_h} px • {"Phối cảnh 4 góc" if is_manual_mode else "Lưới Coons Patch khử uốn cong"}</div>',
                     unsafe_allow_html=True
                 )
 
         # --- EXPORT & RECONSTRUCTION DOCK ---
-        st.markdown('<div class="pane-title" style="margin-top: 14px;"><span>Xuất bản tài liệu</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel-header" style="margin-top: 16px;"><span>Xuất bản tài liệu</span></div>', unsafe_allow_html=True)
 
         exp_col1, exp_col2, exp_col3 = st.columns(3)
 
@@ -801,10 +864,13 @@ if app_mode == "Quét tài liệu":
 elif app_mode == "Chuyển đổi DOCX sang PDF":
     # Mode 2: Clean DOCX to PDF Converter
     st.markdown("""
-    <div class="studio-header">
-      <div class="studio-logo-group">
-        <span class="studio-logo">Chuyển Đổi DOCX sang PDF</span>
-        <span class="studio-badge">Engine Word</span>
+    <div class="studio-navbar">
+      <div class="brand-group">
+        <span class="brand-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Chuyển Đổi DOCX sang PDF
+        </span>
+        <span class="brand-badge">WORD COM ENGINE</span>
       </div>
     </div>
     """, unsafe_allow_html=True)
@@ -817,9 +883,9 @@ elif app_mode == "Chuyển đổi DOCX sang PDF":
     if upload_word is not None:
         file_size_kb = upload_word.size / 1024
         st.markdown(f"""
-        <div class="studio-file-chip" style="margin-bottom: 12px;">
-          <span class="studio-file-name">{upload_word.name}</span>
-          <span class="studio-file-dim">({file_size_kb:.1f} KB) • Sẵn sàng chuyển đổi</span>
+        <div class="meta-chip" style="margin-bottom: 12px;">
+          <span class="meta-chip-name">{upload_word.name}</span>
+          <span class="meta-chip-dim">({file_size_kb:.1f} KB) • Sẵn sàng chuyển đổi</span>
         </div>
         """, unsafe_allow_html=True)
 
