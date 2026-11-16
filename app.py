@@ -577,13 +577,25 @@ new_img_detected = None
 new_source_name = None
 
 if app_mode == "Quét tài liệu":
-    st.sidebar.markdown("<h4 style='color: #FFFFFF; font-size: 0.9rem; margin-bottom: 6px;'>Nguồn tài liệu</h4>", unsafe_allow_html=True)
+    st.sidebar.markdown("<div class='sidebar-section-title'>NGUỒN TÀI LIỆU</div>", unsafe_allow_html=True)
     input_source = st.sidebar.radio(
         "Nguồn ảnh:",
         ["Ảnh mẫu", "Tải ảnh lên", "Webcam"],
         horizontal=True,
         label_visibility="collapsed"
     )
+
+    # Detect when user switches source tab to reset active image appropriately
+    if st.session_state.get("last_input_source") != input_source:
+        st.session_state["last_input_source"] = input_source
+        if input_source == "Webcam":
+            if st.session_state.get("webcam_photo_bytes") is None:
+                st.session_state["raw_cv_img"] = None
+        elif input_source == "Tải ảnh lên":
+            if st.session_state.get("uploaded_file_bytes") is None:
+                st.session_state["raw_cv_img"] = None
+        elif input_source == "Ảnh mẫu":
+            st.session_state["raw_cv_img"] = None
 
     if input_source == "Ảnh mẫu":
         sample_dir = Path("documents/sample")
@@ -617,13 +629,18 @@ if app_mode == "Quét tài liệu":
             bytes_data = uploaded_file.getvalue()
             new_img_detected = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
             new_source_name = Path(uploaded_file.name).stem
+            st.session_state["uploaded_file_bytes"] = bytes_data
 
     elif input_source == "Webcam":
-        camera_photo = st.sidebar.camera_input("Chụp ảnh webcam", label_visibility="collapsed")
-        if camera_photo is not None:
-            bytes_data = camera_photo.getvalue()
-            new_img_detected = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+        if st.session_state.get("webcam_photo_bytes") is not None:
+            new_img_detected = cv2.imdecode(np.frombuffer(st.session_state["webcam_photo_bytes"], np.uint8), cv2.IMREAD_COLOR)
             new_source_name = "camera_capture"
+            if st.sidebar.button("📸 Chụp lại ảnh khác", use_container_width=True):
+                st.session_state["webcam_photo_bytes"] = None
+                st.session_state["raw_cv_img"] = None
+                st.rerun()
+        else:
+            st.sidebar.caption("📷 Căn chỉnh tài liệu và bấm nút chụp ở khung hình chính.")
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("<h4 style='color: #FFFFFF; font-size: 0.9rem; margin-bottom: 6px;'>Cấu hình AI Vision</h4>", unsafe_allow_html=True)
@@ -680,81 +697,201 @@ else:
 # --- MAIN WORKSPACE ---
 
 if app_mode == "Quét tài liệu":
-    # Cache loaded image
-    if new_img_detected is not None:
-        new_hash = hashlib.md5(new_img_detected.tobytes()).hexdigest()
-        old_hash = st.session_state.get("current_img_hash")
-        if new_hash != old_hash:
-            st.session_state["raw_cv_img"] = new_img_detected
-            st.session_state["source_name"] = new_source_name or "document"
-            st.session_state["current_img_hash"] = new_hash
-            st.session_state["needs_detection"] = True
-
-    # Fallback to sample1 on fresh launch
-    if "raw_cv_img" not in st.session_state or st.session_state["raw_cv_img"] is None:
-        sample_path = Path("documents/sample/sample1.jpg")
-        if sample_path.exists():
-            st.session_state["raw_cv_img"] = cv2.imread(str(sample_path))
-            st.session_state["source_name"] = "sample1"
-            st.session_state["current_img_hash"] = hashlib.md5(st.session_state["raw_cv_img"].tobytes()).hexdigest()
-            st.session_state["needs_detection"] = True
-
-    raw_cv_img = st.session_state.get("raw_cv_img")
-    source_name = st.session_state.get("source_name", "document")
-
-    if raw_cv_img is not None:
-        img_h, img_w = raw_cv_img.shape[:2]
-
-        current_detect_params = (max_dim, use_clahe, num_points)
-        cached_params = st.session_state.get("last_detect_params")
-        needs_detection = st.session_state.get("needs_detection", False) or (current_detect_params != cached_params)
-
-        if needs_detection or "detection" not in st.session_state:
-            with st.spinner("Đang phân tích biên dạng tài liệu..."):
-                detection = detect_page_corners(
-                    raw_cv_img,
-                    max_dim=max_dim,
-                    use_clahe=use_clahe,
-                    num_points=num_points,
-                )
-            st.session_state["detection"] = detection
-            st.session_state["last_detect_params"] = current_detect_params
-            st.session_state["needs_detection"] = False
-
-            if detection.corners is not None:
-                st.session_state["active_corners"] = detection.corners.copy()
-            else:
-                margin_x = float(img_w * 0.05)
-                margin_y = float(img_h * 0.05)
-                st.session_state["active_corners"] = np.array([
-                    [margin_x, margin_y],
-                    [img_w - margin_x, margin_y],
-                    [img_w - margin_x, img_h - margin_y],
-                    [margin_x, img_h - margin_y]
-                ], dtype=np.float32)
-
-            st.session_state["is_manual_mode"] = False
-
-        detection: DetectionResult = st.session_state["detection"]
-        active_corners: np.ndarray = st.session_state.get("active_corners")
-        is_manual_mode: bool = st.session_state.get("is_manual_mode", False)
-
-        mode_desc = "Chỉnh tay (4 góc)" if is_manual_mode else f"Tự động ({len(detection.boundary_points) if detection.boundary_points is not None else 4} điểm neo)"
-
-        # Top Bar (Clean, fixed height, high contrast, pure white branding)
-        st.markdown(f"""
+    # 1. Dedicated Webcam Viewfinder (when Webcam mode selected and photo not yet taken)
+    if input_source == "Webcam" and st.session_state.get("webcam_photo_bytes") is None:
+        st.markdown("""
         <div class="top-bar">
           <div class="top-bar-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3M9 12h6M9 16h6M9 8h6"/></svg>
-            <span>Document Studio</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            <span>Chụp ảnh tài liệu qua Webcam</span>
           </div>
           <div class="top-bar-meta">
-            <span class="meta-name">{source_name}</span>
-            <span class="meta-dim">• {img_w} × {img_h} px</span>
-            <span class="meta-badge">{mode_desc}</span>
+            <span class="meta-name">Camera Live</span>
+            <span class="meta-dim">• Sẵn sàng quét</span>
           </div>
         </div>
         """, unsafe_allow_html=True)
+
+        cam_c1, cam_c2, cam_c3 = st.columns([1, 4, 1])
+        with cam_c2:
+            st.markdown("""
+            <div class="panel-header" style="border-radius: 8px 8px 0 0;">
+              <div class="panel-title-group">
+                <span class="panel-dot panel-dot-green"></span>
+                <span>Ống kính máy ảnh</span>
+              </div>
+              <span class="panel-badge">Trực tiếp</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+            cam_shot = st.camera_input("Chụp ảnh tài liệu", label_visibility="collapsed")
+            if cam_shot is not None:
+                st.session_state["webcam_photo_bytes"] = cam_shot.getvalue()
+                st.session_state["needs_detection"] = True
+                st.rerun()
+
+            st.markdown("""
+            <div class="panel-footer" style="text-align: center; line-height: 1.6;">
+              💡 <b>Cách chụp chuẩn:</b> Căn tài liệu vừa khung hình, giữ phẳng giấy và bấm nút <b>Take Photo</b> màu trắng để hệ thống tự động dò viền và nắn thẳng.
+            </div>
+            """, unsafe_allow_html=True)
+
+    # 2. Dedicated Upload View (when Upload mode selected and no file yet)
+    elif input_source == "Tải ảnh lên" and new_img_detected is None and st.session_state.get("raw_cv_img") is None:
+        st.markdown("""
+        <div class="top-bar">
+          <div class="top-bar-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span>Tải ảnh tài liệu</span>
+          </div>
+          <div class="top-bar-meta">
+            <span class="meta-name">Chờ nạp tệp</span>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        up_c1, up_c2, up_c3 = st.columns([1, 4, 1])
+        with up_c2:
+            st.markdown("""
+            <div class="panel-header" style="border-radius: 8px 8px 0 0;">
+              <div class="panel-title-group">
+                <span class="panel-dot panel-dot-green"></span>
+                <span>Tải tệp ảnh tài liệu</span>
+              </div>
+              <span class="panel-badge">Hỗ trợ JPG, PNG, WEBP</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+            main_uploader = st.file_uploader(
+                "Tải lên tệp ảnh:",
+                type=["jpg", "jpeg", "png", "webp", "bmp"],
+                key="main_drag_drop_uploader",
+                label_visibility="collapsed"
+            )
+            if main_uploader is not None:
+                bytes_data = main_uploader.getvalue()
+                new_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+                st.session_state["uploaded_file_bytes"] = bytes_data
+                st.session_state["raw_cv_img"] = new_img
+                st.session_state["source_name"] = Path(main_uploader.name).stem
+                st.session_state["current_img_hash"] = hashlib.md5(new_img.tobytes()).hexdigest()
+                st.session_state["needs_detection"] = True
+                st.rerun()
+
+            st.markdown("""
+            <div class="panel-footer" style="text-align: center;">
+              📁 Kéo thả ảnh hóa đơn, hợp đồng, trang sách vào đây để số hóa tức thì.
+            </div>
+            """, unsafe_allow_html=True)
+
+    # 3. Main Studio Workspace (Image ready)
+    else:
+        # Fallback to sample1 on fresh launch or when in "Ảnh mẫu"
+        if ("raw_cv_img" not in st.session_state or st.session_state["raw_cv_img"] is None) and input_source == "Ảnh mẫu":
+            sample_path = Path("documents/sample/sample1.jpg")
+            if sample_path.exists():
+                st.session_state["raw_cv_img"] = cv2.imread(str(sample_path))
+                st.session_state["source_name"] = "sample1"
+                st.session_state["current_img_hash"] = hashlib.md5(st.session_state["raw_cv_img"].tobytes()).hexdigest()
+                st.session_state["needs_detection"] = True
+
+        # Cache loaded image
+        if new_img_detected is not None:
+            new_hash = hashlib.md5(new_img_detected.tobytes()).hexdigest()
+            old_hash = st.session_state.get("current_img_hash")
+            if new_hash != old_hash:
+                st.session_state["raw_cv_img"] = new_img_detected
+                st.session_state["source_name"] = new_source_name or "document"
+                st.session_state["current_img_hash"] = new_hash
+                st.session_state["needs_detection"] = True
+
+        raw_cv_img = st.session_state.get("raw_cv_img")
+        source_name = st.session_state.get("source_name", "document")
+
+        if raw_cv_img is not None:
+            img_h, img_w = raw_cv_img.shape[:2]
+
+            current_detect_params = (max_dim, use_clahe, num_points)
+            cached_params = st.session_state.get("last_detect_params")
+            needs_detection = st.session_state.get("needs_detection", False) or (current_detect_params != cached_params)
+
+            if needs_detection or "detection" not in st.session_state:
+                with st.spinner("Đang phân tích biên dạng tài liệu..."):
+                    detection = detect_page_corners(
+                        raw_cv_img,
+                        max_dim=max_dim,
+                        use_clahe=use_clahe,
+                        num_points=num_points,
+                    )
+                st.session_state["detection"] = detection
+                st.session_state["last_detect_params"] = current_detect_params
+                st.session_state["needs_detection"] = False
+
+                if detection.corners is not None:
+                    st.session_state["active_corners"] = detection.corners.copy()
+                else:
+                    margin_x = float(img_w * 0.05)
+                    margin_y = float(img_h * 0.05)
+                    st.session_state["active_corners"] = np.array([
+                        [margin_x, margin_y],
+                        [img_w - margin_x, margin_y],
+                        [img_w - margin_x, img_h - margin_y],
+                        [margin_x, img_h - margin_y]
+                    ], dtype=np.float32)
+
+                st.session_state["is_manual_mode"] = False
+
+            detection: DetectionResult = st.session_state["detection"]
+            active_corners: np.ndarray = st.session_state.get("active_corners")
+            is_manual_mode: bool = st.session_state.get("is_manual_mode", False)
+
+            mode_desc = "Chỉnh tay (4 góc)" if is_manual_mode else f"Tự động ({len(detection.boundary_points) if detection.boundary_points is not None else 4} điểm neo)"
+
+            # Top Bar with Retake / Swap button if in Webcam or Upload mode
+            if input_source in ("Webcam", "Tải ảnh lên"):
+                tb_col1, tb_col2 = st.columns([4, 1], gap="small")
+                with tb_col1:
+                    st.markdown(f"""
+                    <div class="top-bar">
+                      <div class="top-bar-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3M9 12h6M9 16h6M9 8h6"/></svg>
+                        <span>Document Studio</span>
+                      </div>
+                      <div class="top-bar-meta">
+                        <span class="meta-name">{source_name}</span>
+                        <span class="meta-dim">• {img_w} × {img_h} px</span>
+                        <span class="meta-badge">{mode_desc}</span>
+                      </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with tb_col2:
+                    if input_source == "Webcam":
+                        if st.button("📸 Chụp lại", use_container_width=True, type="secondary", help="Mở lại camera để chụp lại ảnh tài liệu"):
+                            st.session_state["webcam_photo_bytes"] = None
+                            st.session_state["raw_cv_img"] = None
+                            st.rerun()
+                    elif input_source == "Tải ảnh lên":
+                        if st.button("📁 Đổi ảnh", use_container_width=True, type="secondary", help="Chọn tệp ảnh tài liệu khác"):
+                            st.session_state["uploaded_file_bytes"] = None
+                            st.session_state["raw_cv_img"] = None
+                            st.rerun()
+            else:
+                st.markdown(f"""
+                <div class="top-bar">
+                  <div class="top-bar-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3M9 12h6M9 16h6M9 8h6"/></svg>
+                    <span>Document Studio</span>
+                  </div>
+                  <div class="top-bar-meta">
+                    <span class="meta-name">{source_name}</span>
+                    <span class="meta-dim">• {img_w} × {img_h} px</span>
+                    <span class="meta-badge">{mode_desc}</span>
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
 
         # Equal, Symmetrical Dual-Pane Workspace
         col1, col2 = st.columns(2, gap="medium")
