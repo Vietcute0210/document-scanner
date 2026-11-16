@@ -14,11 +14,11 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: transparent;
-      color: #1e293b;
+      color: #0f172a;
       overflow: hidden;
-      padding: 4px;
+      padding: 2px;
     }
 
     .editor-wrapper {
@@ -33,11 +33,11 @@
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 6px;
-      background: #f8fafc;
+      gap: 8px;
+      background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
-      padding: 6px 10px;
+      padding: 7px 12px;
       font-size: 13px;
     }
 
@@ -47,60 +47,70 @@
       gap: 8px;
     }
 
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #334155;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot-auto {
+      background: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+
+    .dot-manual {
+      background: #f59e0b;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
+
     .btn {
       background: #ffffff;
       color: #334155;
       border: 1px solid #cbd5e1;
-      padding: 4px 10px;
+      padding: 5px 10px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       transition: all 0.15s ease;
     }
 
+    .btn svg {
+      width: 13px;
+      height: 13px;
+      stroke-width: 2;
+    }
+
     .btn:hover {
-      background: #f1f5f9;
+      background: #f8fafc;
       border-color: #94a3b8;
       color: #0f172a;
     }
 
     .btn:active {
-      transform: scale(0.97);
-    }
-
-    .badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 12px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .badge-auto {
-      background: #dcfce7;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
-
-    .badge-manual {
-      background: #fef3c7;
-      color: #92400e;
-      border: 1px solid #fde68a;
+      transform: scale(0.98);
     }
 
     .canvas-container {
       position: relative;
       width: 100%;
-      background: #0f172a;
+      background: #090d16;
+      border: 1px solid #1e293b;
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -114,24 +124,24 @@
     }
 
     .help-hint {
-      font-size: 11px;
+      font-size: 11.5px;
       color: #64748b;
-      margin-top: 2px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       flex-wrap: wrap;
+      padding: 0 2px;
     }
 
     .hint-item {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
     }
 
     .hint-dot-red {
-      width: 9px;
-      height: 9px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #ef4444;
       display: inline-block;
@@ -139,20 +149,20 @@
     }
 
     .hint-dot-orange {
-      width: 9px;
-      height: 9px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #f59e0b;
       display: inline-block;
       border: 1px solid #ffffff;
     }
 
-    .hint-line-green {
-      width: 14px;
-      height: 3px;
+    .hint-line {
+      width: 12px;
+      height: 2.5px;
       background: #10b981;
       display: inline-block;
-      border-radius: 2px;
+      border-radius: 1px;
     }
   </style>
 </head>
@@ -160,14 +170,19 @@
   <div class="editor-wrapper" id="wrapper">
     <div class="toolbar">
       <div class="toolbar-left">
-        <span id="statusBadge" class="badge badge-auto">🟢 Tự Động Nhận Diện</span>
+        <span id="statusIndicator" class="status-indicator">
+          <span id="statusDot" class="dot dot-auto"></span>
+          <span id="statusText">Tự động nhận diện</span>
+        </span>
       </div>
       <div class="toolbar-right">
         <button id="btnResetAuto" class="btn" title="Khôi phục lại viền tự động phát hiện ban đầu">
-          ↺ Về Tự Động
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Khôi phục tự động
         </button>
         <button id="btnFullImage" class="btn" title="Mở rộng 4 góc ra toàn bộ mép ảnh">
-          ⛶ Toàn Mép Ảnh
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          Toàn khung ảnh
         </button>
       </div>
     </div>
@@ -177,9 +192,9 @@
     </div>
 
     <div class="help-hint">
-      <span class="hint-item"><span class="hint-dot-red"></span> Chấm đỏ: Kéo chỉnh góc</span>
-      <span class="hint-item"><span class="hint-dot-orange"></span> Chấm cam: Kéo cả cạnh song song</span>
-      <span class="hint-item"><span class="hint-line-green"></span> Viền luôn thẳng tuyệt đối (tứ giác lồi)</span>
+      <span class="hint-item"><span class="hint-dot-red"></span> Điểm góc đỏ: Chỉnh góc</span>
+      <span class="hint-item"><span class="hint-dot-orange"></span> Điểm cam: Dịch cạnh song song</span>
+      <span class="hint-item"><span class="hint-line"></span> Ràng buộc viền thẳng</span>
     </div>
   </div>
 
@@ -262,7 +277,8 @@
     const canvas = document.getElementById("editorCanvas");
     const ctx = canvas.getContext("2d");
     const wrapper = document.getElementById("wrapper");
-    const statusBadge = document.getElementById("statusBadge");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
     const btnResetAuto = document.getElementById("btnResetAuto");
     const btnFullImage = document.getElementById("btnFullImage");
 
@@ -282,19 +298,19 @@
     let lastRenderKey = null;
 
     // Interaction state
-    let activeDrag = null; // { type: 'corner'|'edge', index: 0..3, startPts: [...], startMouse: {x,y} }
-    const CORNER_RADIUS = 9.5;
-    const MID_RADIUS = 7.5;
-    const HIT_RADIUS = 26; // generous hit zone for touch and mouse
+    let activeDrag = null;
+    const CORNER_RADIUS = 9;
+    const MID_RADIUS = 7;
+    const HIT_RADIUS = 26;
 
     function updateBadge(isManual) {
       isManualEdited = isManual;
       if (isManual) {
-        statusBadge.className = "badge badge-manual";
-        statusBadge.innerHTML = "✏️ Đã Chỉnh Tay (Thẳng Tuyệt Đối)";
+        statusDot.className = "dot dot-manual";
+        statusText.textContent = "Chế độ chỉnh tay";
       } else {
-        statusBadge.className = "badge badge-auto";
-        statusBadge.innerHTML = "🟢 Tự Động Nhận Diện";
+        statusDot.className = "dot dot-auto";
+        statusText.textContent = "Tự động nhận diện";
       }
     }
 
@@ -328,10 +344,9 @@
       ctx.strokeStyle = strokeColor;
       ctx.stroke();
 
-      // Inner shadow / accent for depth
       ctx.beginPath();
       ctx.arc(x, y, radius - 2, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(0,0,0,0.2)";
+      ctx.strokeStyle = "rgba(0,0,0,0.18)";
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.restore();
@@ -342,17 +357,14 @@
       const magSize = 130;
       const zoom = 2.4;
 
-      // Position magnifier in opposite corner to avoid finger/mouse occlusion
       let magX = targetX < canvas.width / 2 ? canvas.width - magSize - 16 : 16;
       let magY = targetY < canvas.height / 2 ? canvas.height - magSize - 16 : 16;
 
       ctx.save();
-      // Clip circle
       ctx.beginPath();
       ctx.arc(magX + magSize / 2, magY + magSize / 2, magSize / 2, 0, Math.PI * 2);
       ctx.clip();
 
-      // Draw magnified portion of baseImg
       const srcW = magSize / zoom;
       const srcH = magSize / zoom;
       const srcX = (targetX / canvas.width) * origW - srcW / 2;
@@ -360,22 +372,20 @@
 
       ctx.drawImage(baseImg, srcX, srcY, srcW, srcH, magX, magY, magSize, magSize);
 
-      // Draw crosshairs
-      ctx.strokeStyle = "rgba(239, 68, 68, 0.85)";
+      ctx.strokeStyle = "rgba(239, 68, 68, 0.9)";
       ctx.lineWidth = 1.5;
       const cx = magX + magSize / 2;
       const cy = magY + magSize / 2;
       ctx.beginPath();
-      ctx.moveTo(cx - 14, cy); ctx.lineTo(cx + 14, cy);
-      ctx.moveTo(cx, cy - 14); ctx.lineTo(cx, cy + 14);
+      ctx.moveTo(cx - 12, cy); ctx.lineTo(cx + 12, cy);
+      ctx.moveTo(cx, cy - 12); ctx.lineTo(cx, cy + 12);
       ctx.stroke();
 
-      // Outer border & shadow
       ctx.restore();
       ctx.save();
       ctx.beginPath();
       ctx.arc(magX + magSize / 2, magY + magSize / 2, magSize / 2, 0, Math.PI * 2);
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 3.5;
       ctx.strokeStyle = "#ffffff";
       ctx.stroke();
       ctx.restore();
@@ -391,7 +401,7 @@
 
       // 2. Dim outside quadrilateral
       ctx.save();
-      ctx.fillStyle = "rgba(15, 23, 42, 0.42)";
+      ctx.fillStyle = "rgba(9, 13, 22, 0.50)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Cut out interior
@@ -405,7 +415,7 @@
       ctx.fill();
       ctx.restore();
 
-      // 3. Draw straight quad boundary (Vibrant Green)
+      // 3. Draw straight quad boundary
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(corners[0].x, corners[0].y);
@@ -414,7 +424,7 @@
       }
       ctx.closePath();
       ctx.strokeStyle = "#10b981";
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = 3;
       ctx.lineJoin = "round";
       ctx.stroke();
       ctx.restore();
@@ -445,7 +455,6 @@
     // --- EMIT BACK TO PYTHON ---
     function emitCornersToPython(isManual = true) {
       if (corners.length < 4) return;
-      // Convert canvas coords back to original image coords
       const origCorners = corners.map(pt => [
         Math.round((pt.x / canvas.width) * origW * 10) / 10,
         Math.round((pt.y / canvas.height) * origH * 10) / 10
@@ -460,7 +469,6 @@
 
     // --- HIT TESTING ---
     function findHitTarget(pos) {
-      // 1. Check 4 corners first (Red dots)
       for (let i = 0; i < 4; i++) {
         const d = Math.hypot(pos.x - corners[i].x, pos.y - corners[i].y);
         if (d <= HIT_RADIUS) {
@@ -468,7 +476,6 @@
         }
       }
 
-      // 2. Check 4 edge midpoints (Orange dots)
       const mids = getMidpoints();
       for (let i = 0; i < 4; i++) {
         const d = Math.hypot(pos.x - mids[i].x, pos.y - mids[i].y);
@@ -477,7 +484,6 @@
         }
       }
 
-      // 3. Check proximity along 4 edge segments
       for (let i = 0; i < 4; i++) {
         const p1 = corners[i];
         const p2 = corners[(i + 1) % 4];
@@ -518,7 +524,6 @@
     function handlePointerMove(e) {
       const pos = getCanvasCoordinates(e);
 
-      // Update cursor when hovering
       if (!activeDrag) {
         const hit = findHitTarget(pos);
         if (hit) {
@@ -533,7 +538,6 @@
         return;
       }
 
-      // We are dragging
       const dx = pos.x - activeDrag.startMouse.x;
       const dy = pos.y - activeDrag.startMouse.y;
       const startPts = activeDrag.startPts;
@@ -550,7 +554,6 @@
           corners = candidate;
         }
       } else if (activeDrag.type === "edge") {
-        // Move entire straight edge
         const edgeIdx = activeDrag.index;
         const iStart = edgeIdx;
         const iEnd = (edgeIdx + 1) % 4;
@@ -565,9 +568,7 @@
         const transStart = { x: pStart.x + dx, y: pStart.y + dy };
         const transEnd = { x: pEnd.x + dx, y: pEnd.y + dy };
 
-        // Intersect translated edge line with prev line
         const newStart = lineIntersection(transStart, transEnd, pPrev, pStart);
-        // Intersect translated edge line with next line
         const newEnd = lineIntersection(transStart, transEnd, pEnd, pNext);
 
         const candidate = corners.map(p => ({ x: p.x, y: p.y }));
@@ -586,7 +587,6 @@
           candidate[iStart] = { x: clamp(newStart.x, 0, canvas.width), y: clamp(newStart.y, 0, canvas.height) };
           candidate[iEnd] = { x: clamp(newEnd.x, 0, canvas.width), y: clamp(newEnd.y, 0, canvas.height) };
         } else {
-          // Rigid translation fallback
           candidate[iStart] = { x: clamp(transStart.x, 0, canvas.width), y: clamp(transStart.y, 0, canvas.height) };
           candidate[iEnd] = { x: clamp(transEnd.x, 0, canvas.width), y: clamp(transEnd.y, 0, canvas.height) };
         }
@@ -653,7 +653,6 @@
 
         baseImg.onload = () => {
           imgLoaded = true;
-          // Calculate responsive canvas display size
           const containerWidth = wrapper.clientWidth || 550;
           displayW = Math.min(containerWidth, 800);
           displayH = Math.round((displayW * origH) / origW);
@@ -663,7 +662,6 @@
           scaleX = displayW / origW;
           scaleY = displayH / origH;
 
-          // Always cache auto_corners from Python
           if (args.auto_corners && args.auto_corners.length === 4) {
             initialAutoCorners = args.auto_corners.map(pt => ({
               x: pt[0] * scaleX,
@@ -671,7 +669,6 @@
             }));
           }
 
-          // Convert incoming active corners to canvas space
           if (args.corners && args.corners.length === 4) {
             const incomingCanvas = args.corners.map(pt => ({
               x: pt[0] * scaleX,
@@ -698,7 +695,6 @@
       }
     });
 
-    // Notify Streamlit that the component is loaded and ready
     sendReady();
   </script>
 </body>
