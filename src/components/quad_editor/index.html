@@ -16,7 +16,7 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: transparent;
-      color: #F3F5F7;
+      color: #0F172A;
       overflow: hidden;
       padding: 0;
     }
@@ -24,21 +24,22 @@
     .editor-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 8px;
       width: 100%;
     }
 
-    /* Charcoal dark toolbar */
+    /* Modern clean bright toolbar */
     .toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 8px;
-      background: #1A1A1A;
-      border: 1px solid #282828;
-      border-radius: 8px;
-      padding: 6px 12px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 9px;
+      padding: 7px 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
     .toolbar-left, .toolbar-right {
@@ -51,41 +52,42 @@
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      font-size: 12px;
-      font-weight: 500;
-      color: #D1D5DB;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #334155;
     }
 
     .dot {
-      width: 7.5px;
-      height: 7.5px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       display: inline-block;
     }
 
     .dot-auto {
-      background: #10B981;
-      box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+      background: #059669;
+      box-shadow: 0 0 6px rgba(5, 150, 105, 0.4);
     }
 
     .dot-manual {
-      background: #F59E0B;
-      box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+      background: #D97706;
+      box-shadow: 0 0 6px rgba(217, 119, 6, 0.4);
     }
 
     .btn {
-      background: #242424;
-      color: #F3F5F7;
-      border: 1px solid #333333;
-      padding: 5px 11px;
-      border-radius: 6px;
+      background: #FFFFFF;
+      color: #1E293B;
+      border: 1px solid #CBD5E1;
+      padding: 5px 12px;
+      border-radius: 7px;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     }
 
     .btn svg {
@@ -95,9 +97,10 @@
     }
 
     .btn:hover {
-      background: #2E2E2E;
-      border-color: #555555;
-      color: #FFFFFF;
+      background: #F8FAFC;
+      border-color: #94A3B8;
+      color: #0F172A;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     }
 
     .btn:active {
@@ -107,13 +110,14 @@
     .canvas-container {
       position: relative;
       width: 100%;
-      background: #0E0E0E;
-      border: 1px solid #282828;
-      border-radius: 8px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
       overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
     canvas {
@@ -124,13 +128,14 @@
     }
 
     .help-hint {
-      font-size: 11px;
-      color: #888888;
+      font-size: 11.5px;
+      color: #64748B;
       display: flex;
       align-items: center;
       gap: 14px;
       flex-wrap: wrap;
       padding: 0 2px;
+      font-weight: 500;
     }
 
     .hint-item {
@@ -145,7 +150,8 @@
       border-radius: 50%;
       background: #EF4444;
       display: inline-block;
-      border: 1px solid #FFFFFF;
+      border: 1.5px solid #FFFFFF;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
     }
 
     .hint-dot-orange {
@@ -154,15 +160,16 @@
       border-radius: 50%;
       background: #F59E0B;
       display: inline-block;
-      border: 1px solid #FFFFFF;
+      border: 1.5px solid #FFFFFF;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
     }
 
     .hint-line {
-      width: 12px;
+      width: 14px;
       height: 2.5px;
       background: #10B981;
       display: inline-block;
-      border-radius: 1px;
+      border-radius: 2px;
     }
   </style>
 </head>
@@ -394,7 +401,7 @@
       ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
 
       ctx.save();
-      ctx.fillStyle = "rgba(8, 8, 8, 0.70)";
+      ctx.fillStyle = "rgba(15, 23, 42, 0.45)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.globalCompositeOperation = "destination-out";

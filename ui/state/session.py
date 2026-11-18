@@ -2,16 +2,28 @@
 import hashlib
 import streamlit as st
 
-IMAGE_KEYS = ("raw_cv_img", "source_name", "current_img_hash", "detection", "last_detect_params", "active_corners", "is_manual_mode", "final_img", "ai_text", "ai_docx", "ai_data", "ai_result_hash", "pdf_output", "docx_output", "final_image_hash")
+IMAGE_KEYS = (
+    "raw_cv_img", "source_name", "current_img_hash", "detection",
+    "last_detect_params", "active_corners", "is_manual_mode", "final_img",
+    "ai_text", "ai_docx", "ai_data", "ai_result_hash", "pdf_output",
+    "docx_output", "final_image_hash", "webcam_photo_bytes"
+)
 
 
 def init_session() -> None:
     defaults = {
-        "raw_cv_img": None, "source_name": "document", "current_img_hash": None,
-        "detection": None, "last_detect_params": None, "active_corners": None,
-        "is_manual_mode": False, "needs_detection": False,
-        "webcam_photo_bytes": None, "gemini_api_key_input": "",
-        "filter_mode": "Màu thông minh", "contrast_boost": 2.2,
+        "raw_cv_img": None,
+        "source_name": "document",
+        "current_img_hash": None,
+        "detection": None,
+        "last_detect_params": None,
+        "active_corners": None,
+        "is_manual_mode": False,
+        "needs_detection": False,
+        "webcam_photo_bytes": None,
+        "gemini_api_key_input": "",
+        "filter_mode": "Màu thông minh",
+        "contrast_boost": 2.2,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -29,7 +41,11 @@ def set_image(image, source_name: str) -> bool:
     digest = image_digest(image)
     if digest == st.session_state.get("current_img_hash"):
         return False
-    for key in ("detection", "last_detect_params", "active_corners", "final_img", "ai_text", "ai_docx", "ai_data", "ai_result_hash", "pdf_output", "docx_output", "final_image_hash"):
+    for key in (
+        "detection", "last_detect_params", "active_corners", "final_img",
+        "ai_text", "ai_docx", "ai_data", "ai_result_hash", "pdf_output",
+        "docx_output", "final_image_hash"
+    ):
         st.session_state.pop(key, None)
     st.session_state["raw_cv_img"] = image
     st.session_state["source_name"] = source_name
