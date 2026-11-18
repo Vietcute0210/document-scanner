@@ -21,7 +21,7 @@ def render_sidebar():
 
         st.markdown('<div class="section-kicker">Chế độ làm việc</div>', unsafe_allow_html=True)
         page = st.radio(
-            "Workspace",
+            "chế_độ_làm_việc",
             ["Quét tài liệu", "Chuyển DOCX sang PDF"],
             label_visibility="collapsed"
         )
@@ -31,7 +31,7 @@ def render_sidebar():
         if page == "Quét tài liệu":
             st.markdown('<div class="section-kicker">Nguồn tài liệu</div>', unsafe_allow_html=True)
             settings["source"] = st.radio(
-                "Nguồn ảnh",
+                "nguồn_ảnh",
                 ["Ảnh mẫu", "Tải ảnh lên", "Camera"],
                 horizontal=False,
                 label_visibility="collapsed"

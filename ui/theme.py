@@ -114,17 +114,31 @@ def apply_theme() -> None:
         margin-bottom: 6px !important;
     }
 
-    /* FIX SIDEBAR RADIOS: MUST BE STACKED VERTICALLY, NEVER SQUISHED IN A ROW */
-    [data-testid="stSidebar"] div[data-testid="stRadio"] > div {
+    /* CRITICAL FIX: ABSOLUTELY HIDE ALL COLLAPSED WIDGET LABELS */
+    [data-testid="stRadio"] label[data-testid="stWidgetLabel"],
+    [data-testid="stRadio"] > label,
+    div[data-testid="stRadio"] > label {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        visibility: hidden !important;
+    }
+
+    /* SIDEBAR RADIOS: MUST BE STACKED VERTICALLY IN ROLE="RADIOGROUP" */
+    [data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] {
         display: flex !important;
         flex-direction: column !important;
         background: transparent !important;
         border: none !important;
         padding: 0 !important;
-        gap: 6px !important;
+        gap: 8px !important;
         width: 100% !important;
+        margin-top: 4px !important;
+        margin-bottom: 14px !important;
     }
-    [data-testid="stSidebar"] div[data-testid="stRadio"] label {
+    [data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] > label {
         display: flex !important;
         align-items: center !important;
         justify-content: flex-start !important;
@@ -142,14 +156,14 @@ def apply_theme() -> None:
         transition: all 0.15s ease !important;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
     }
-    [data-testid="stSidebar"] div[data-testid="stRadio"] label:hover {
+    [data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] > label:hover {
         background: #F8FAFC !important;
         border-color: #CBD5E1 !important;
         color: var(--ink) !important;
         -webkit-text-fill-color: var(--ink) !important;
     }
-    [data-testid="stSidebar"] div[data-testid="stRadio"] label:has(input:checked),
-    [data-testid="stSidebar"] div[data-testid="stRadio"] label[data-checked="true"] {
+    [data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked),
+    [data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] > label[data-checked="true"] {
         background: var(--brand-tint) !important;
         color: #0369A1 !important;
         -webkit-text-fill-color: #0369A1 !important;
@@ -157,9 +171,14 @@ def apply_theme() -> None:
         font-weight: 600 !important;
         box-shadow: 0 1px 3px rgba(2, 132, 199, 0.12) !important;
     }
+    /* Proper radio dot spacing inside sidebar label */
+    [data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] > label div[data-testid="stWidgetSelection"],
+    [data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-child {
+        margin-right: 10px !important;
+    }
 
-    /* MAIN CONTENT RADIOS (Filter mode): Clean, spacious wrap */
-    div[data-testid="stRadio"] > div {
+    /* MAIN CONTENT RADIOS (Filter mode): Clean, spacious wrap without radio circle */
+    [data-testid="stMainBlockContainer"] div[data-testid="stRadio"] div[role="radiogroup"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: wrap !important;
@@ -167,9 +186,10 @@ def apply_theme() -> None:
         border: 1px solid var(--line) !important;
         border-radius: 9px !important;
         padding: 4px !important;
-        gap: 4px !important;
+        gap: 6px !important;
+        margin-bottom: 14px !important;
     }
-    div[data-testid="stRadio"] label {
+    [data-testid="stMainBlockContainer"] div[data-testid="stRadio"] div[role="radiogroup"] > label {
         flex: 1 1 auto !important;
         min-width: 90px !important;
         display: flex !important;
@@ -187,24 +207,24 @@ def apply_theme() -> None:
         transition: all 0.15s ease !important;
         border: 1px solid transparent !important;
     }
-    div[data-testid="stRadio"] label > div:first-child,
-    div[data-testid="stRadio"] div[data-testid="stWidgetSelection"],
-    div[data-testid="stRadio"] div[role="radio"] > div:first-child {
-        display: none !important;
-    }
-    div[data-testid="stRadio"] label:hover {
+    [data-testid="stMainBlockContainer"] div[data-testid="stRadio"] div[role="radiogroup"] > label:hover {
         color: var(--ink) !important;
         -webkit-text-fill-color: var(--ink) !important;
         background: rgba(255, 255, 255, 0.7) !important;
     }
-    div[data-testid="stRadio"] label:has(input:checked),
-    div[data-testid="stRadio"] label[data-checked="true"] {
+    [data-testid="stMainBlockContainer"] div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked),
+    [data-testid="stMainBlockContainer"] div[data-testid="stRadio"] div[role="radiogroup"] > label[data-checked="true"] {
         background: #FFFFFF !important;
         color: var(--ink) !important;
         -webkit-text-fill-color: var(--ink) !important;
         font-weight: 600 !important;
         border: 1px solid #CBD5E1 !important;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    }
+    /* Hide circular radio dot on main segmented pills */
+    [data-testid="stMainBlockContainer"] div[data-testid="stRadio"] div[role="radiogroup"] > label div[data-testid="stWidgetSelection"],
+    [data-testid="stMainBlockContainer"] div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-child {
+        display: none !important;
     }
 
     /* Sidebar Inputs, Selectboxes */

@@ -355,7 +355,7 @@ def render_scanner(settings):
             """, unsafe_allow_html=True)
             st.caption("Làm phẳng phối cảnh và tăng cường độ đậm nét chữ.")
 
-            filter_mode = st.radio("Chế độ hình ảnh", FILTERS, horizontal=True, key="filter_mode", label_visibility="collapsed")
+            filter_mode = st.radio("chế_độ_hình_ảnh", FILTERS, horizontal=True, key="filter_mode", label_visibility="collapsed")
             contrast = st.slider("Độ đậm nét chữ", 1.0, 4.0, 2.2, 0.2, key="contrast_boost", help="Tăng cường độ đậm của nét mực văn bản.")
 
             if manual or not detected:
