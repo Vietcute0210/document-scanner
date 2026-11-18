@@ -16,14 +16,36 @@ from ui.services.documents import generate_pdf_bytes, generate_docx_bytes, perfo
 FILTERS = ["Màu thông minh", "Xám mịn", "Đen trắng", "Màu gốc"]
 
 
+def _render_hero_banner():
+    st.markdown("""
+    <div class="hero-banner">
+      <div class="hero-eyebrow">✨ AI-POWERED DOCUMENT STUDIO</div>
+      <div class="hero-title">Quét & Khử Nghiêng Tài Liệu Chuyên Nghiệp</div>
+      <div class="hero-subtitle">
+        Tự động nhận diện đường viền, nắn phẳng phối cảnh nghiêng và khử cong Coons Patch chuẩn in ấn A4. Tích hợp AI Gemini tái tạo cấu trúc tài liệu Word có thể chỉnh sửa.
+      </div>
+      <div class="hero-stepper">
+        <div class="step-item"><span class="step-num">1</span> Nạp ảnh tài liệu / Camera</div>
+        <span class="step-arrow">➔</span>
+        <div class="step-item"><span class="step-num">2</span> Căn chỉnh 4 góc & Khử cong</div>
+        <span class="step-arrow">➔</span>
+        <div class="step-item"><span class="step-num">3</span> Lọc nét chữ & Xuất PDF / Word / AI</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 def _render_camera_viewfinder(epoch: int):
-    """Dedicated interactive camera viewfinder and capture options."""
+    """Rich interactive camera viewfinder and capture options."""
     with st.container(border=True):
         st.markdown("""
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-          <div>
-            <h3 style="margin: 0; font-size: 1.15rem;">Ống kính Camera · Sẵn sàng quét</h3>
-            <p style="margin: 2px 0 0 0; color: #64748B; font-size: 0.85rem;">Chọn chụp trực tiếp qua Webcam phần cứng máy tính hoặc sử dụng Camera trình duyệt.</p>
+        <div class="panel-header-rich">
+          <div class="panel-title-group">
+            <div class="panel-icon-badge icon-badge-blue">📷</div>
+            <div>
+              <div class="panel-title-text">Ống kính Camera · Sẵn sàng quét</div>
+              <div style="font-size: 0.8rem; color: #64748B; margin-top: 1px;">Hỗ trợ Webcam phần cứng máy tính độ phân giải cao và Camera trình duyệt</div>
+            </div>
           </div>
           <span class="meta-badge-success">● Camera Online</span>
         </div>
@@ -33,7 +55,7 @@ def _render_camera_viewfinder(epoch: int):
 
         with col_hw:
             st.markdown("#### 💻 Webcam máy tính (OpenCV)")
-            st.caption("Chụp từ webcam phần cứng với độ phân giải cao và tốc độ phản hồi tức thì.")
+            st.caption("Chụp từ thiết bị webcam máy tính với độ phân giải cao và tốc độ phản hồi tức thì.")
 
             if st.button("📸 Chụp ngay 1 ảnh từ Webcam (1-Click)", type="primary", use_container_width=True, key=f"hw_snap_btn_{epoch}"):
                 with st.spinner("Đang kết nối camera và bắt khung hình nét nhất..."):
@@ -64,7 +86,7 @@ def _render_camera_viewfinder(epoch: int):
 
         with col_web:
             st.markdown("#### 🌐 Camera Trình duyệt")
-            st.caption("Cấp quyền camera cho trình duyệt để căn chỉnh và bấm chụp trực tiếp trên trang.")
+            st.caption("Cấp quyền camera cho trình duyệt để căn chỉnh và bấm chụp trực tiếp trên trang web.")
             photo = st.camera_input("Chụp ảnh tài liệu qua trình duyệt", key=f"browser_cam_{epoch}", label_visibility="collapsed")
             if photo is not None:
                 raw_bytes = photo.getvalue()
@@ -83,15 +105,45 @@ def _render_camera_viewfinder(epoch: int):
         </div>
         """, unsafe_allow_html=True)
 
+    # Bento Feature Highlights
+    f_c1, f_c2, f_c3 = st.columns(3, gap="medium")
+    with f_c1:
+        st.markdown("""
+        <div class="feat-card">
+          <div class="feat-icon">📐</div>
+          <div class="feat-title">Khử cong Coons Patch</div>
+          <div class="feat-desc">Thuật toán nội suy bề mặt uốn lượn 8-12 điểm neo giúp làm phẳng các trang sách hoặc giấy gấp nếp.</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with f_c2:
+        st.markdown("""
+        <div class="feat-card">
+          <div class="feat-icon">⚡</div>
+          <div class="feat-title">Bộ lọc Magic Color</div>
+          <div class="feat-desc">Xóa bỏ sấp bóng, làm trắng nền giấy và tăng cường độ đậm nét chữ bằng kỹ thuật xử lý ảnh OpenCV tiên tiến.</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with f_c3:
+        st.markdown("""
+        <div class="feat-card">
+          <div class="feat-icon">🤖</div>
+          <div class="feat-title">Gemini AI Vision</div>
+          <div class="feat-desc">Trích xuất bố cục trang, bảng biểu, danh sách và tạo file Word có thể biên tập và gõ lại như văn bản gốc.</div>
+        </div>
+        """, unsafe_allow_html=True)
+
 
 def _render_uploader_view(epoch: int):
     """Dedicated file upload screen when no image is loaded yet."""
     with st.container(border=True):
         st.markdown("""
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-          <div>
-            <h3 style="margin: 0; font-size: 1.15rem;">Tải ảnh tài liệu từ thiết bị</h3>
-            <p style="margin: 2px 0 0 0; color: #64748B; font-size: 0.85rem;">Hỗ trợ các định dạng ảnh phổ biến: JPG, PNG, WEBP, BMP.</p>
+        <div class="panel-header-rich">
+          <div class="panel-title-group">
+            <div class="panel-icon-badge icon-badge-purple">📁</div>
+            <div>
+              <div class="panel-title-text">Tải ảnh tài liệu từ máy tính</div>
+              <div style="font-size: 0.8rem; color: #64748B; margin-top: 1px;">Kéo thả ảnh hoặc chọn từ thiết bị để bắt đầu số hóa</div>
+            </div>
           </div>
           <span class="meta-badge-info">Chờ tệp tải lên</span>
         </div>
@@ -114,7 +166,7 @@ def _render_uploader_view(epoch: int):
 
         st.markdown("""
         <div class="tip-box">
-          💡 <strong>Lưu ý:</strong> Để có kết quả quét tốt nhất, hãy chọn ảnh có độ phân giải từ 1000px trở lên, chữ in hoặc viết tay rõ nét.
+          💡 <strong>Khuyên dùng:</strong> Nên sử dụng ảnh chụp vuông góc với tài liệu, độ phân giải tối thiểu từ 1000px trở lên để chất lượng văn bản sau khi quét đạt độ sắc nét cao nhất.
         </div>
         """, unsafe_allow_html=True)
 
@@ -152,30 +204,55 @@ def _detect_if_needed(image, settings):
 
 
 def _render_export(final_img, source_name, settings):
-    st.markdown("## Xuất tài liệu")
+    st.markdown('<div class="section-kicker">XUẤT BẢN & TÁI TẠO AI</div>', unsafe_allow_html=True)
+    st.markdown("## Tùy chọn xuất tài liệu")
     st.caption("Lưu trữ bản scan chuẩn in ấn hoặc sử dụng trí tuệ nhân tạo AI để tái tạo văn bản có thể chỉnh sửa.")
+
     pdf_col, docx_col, ai_col = st.columns(3, gap="medium")
 
     with pdf_col:
         with st.container(border=True):
-            st.markdown("### PDF · A4")
-            st.caption("Xuất file PDF kích thước A4 chuẩn in ấn và chia sẻ.")
+            st.markdown("""
+            <div class="panel-header-rich">
+              <div class="panel-title-group">
+                <div class="panel-icon-badge icon-badge-rose">📄</div>
+                <div>
+                  <div class="panel-title-text">PDF · Chuẩn A4</div>
+                  <div style="font-size: 0.78rem; color: #64748B;">Lưu trữ & In ấn chất lượng cao</div>
+                </div>
+              </div>
+              <span class="meta-badge-success">300 DPI</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.caption("Định dạng file PDF chuẩn kích thước A4 quốc tế, tương thích mọi thiết bị đọc tài liệu.")
             pdf_bytes = generate_pdf_bytes(final_img)
             st.download_button(
-                "Tải file PDF (.pdf)",
+                "📥 Tải file PDF (.pdf)",
                 data=pdf_bytes,
                 file_name=f"{source_name}_scanned.pdf",
                 mime="application/pdf",
-                use_container_width=True
+                use_container_width=True,
+                type="primary"
             )
 
     with docx_col:
         with st.container(border=True):
-            st.markdown("### Word · Scan")
-            st.caption("Nhúng trang scan vào bố cục trang tài liệu Word tiêu chuẩn.")
+            st.markdown("""
+            <div class="panel-header-rich">
+              <div class="panel-title-group">
+                <div class="panel-icon-badge icon-badge-blue">📝</div>
+                <div>
+                  <div class="panel-title-text">Word · Nhúng Scan</div>
+                  <div style="font-size: 0.78rem; color: #64748B;">Bố cục tài liệu Word tiêu chuẩn</div>
+                </div>
+              </div>
+              <span class="meta-badge-info">DOCX</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.caption("Nhúng trực tiếp trang tài liệu đã quét vào văn bản Microsoft Word (.docx).")
             docx_bytes = generate_docx_bytes(final_img, f"Tài liệu - {source_name}")
             st.download_button(
-                "Tải file Word (.docx)",
+                "📥 Tải file Word (.docx)",
                 data=docx_bytes,
                 file_name=f"{source_name}_scanned.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -184,9 +261,21 @@ def _render_export(final_img, source_name, settings):
 
     with ai_col:
         with st.container(border=True):
-            st.markdown("### AI · Editable Word")
-            st.caption("Tái tạo đoạn văn, tiêu đề, bảng và danh sách có thể chỉnh sửa.")
-            if st.button("Tái tạo bằng AI", type="primary", key="make_ai", use_container_width=True):
+            st.markdown("""
+            <div class="panel-header-rich">
+              <div class="panel-title-group">
+                <div class="panel-icon-badge icon-badge-purple">✨</div>
+                <div>
+                  <div class="panel-title-text">AI · Word Biên Tập</div>
+                  <div style="font-size: 0.78rem; color: #64748B;">Trích xuất tiêu đề, bảng & đoạn văn</div>
+                </div>
+              </div>
+              <span class="meta-badge-info">Gemini AI</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.caption("Trí tuệ nhân tạo nhận diện chữ viết, phân tích cấu trúc bảng và dựng lại văn bản có thể gõ sửa.")
+
+            if st.button("✨ Bắt đầu tái tạo bằng AI", type="primary", key="make_ai", use_container_width=True):
                 try:
                     with st.spinner(f"Gemini đang phân tích nội dung bằng mô hình {settings.get('model', 'gemini-2.5-flash')}..."):
                         text, data, structured = perform_ai_reconstruction(
@@ -205,7 +294,7 @@ def _render_export(final_img, source_name, settings):
 
             if st.session_state.get("ai_docx") and st.session_state.get("ai_result_hash") == st.session_state.get("final_image_hash"):
                 st.download_button(
-                    "Tải Word đã tái tạo (.docx)",
+                    "📥 Tải Word đã tái tạo (.docx)",
                     data=st.session_state["ai_docx"],
                     file_name=f"{source_name}_ai_reconstructed.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -213,11 +302,18 @@ def _render_export(final_img, source_name, settings):
                 )
 
     if st.session_state.get("ai_result_hash") == st.session_state.get("final_image_hash") and st.session_state.get("ai_text"):
-        with st.expander("Xem chi tiết nội dung văn bản tái tạo"):
+        with st.expander("👁️ Xem chi tiết nội dung văn bản bóc tách từ AI"):
             blocks = st.session_state.get("ai_data", {}).get("blocks", [])
             counts = {kind: sum(1 for b in blocks if b.get("type") == kind) for kind in ("heading", "paragraph", "table", "list")}
-            st.caption(f"{counts['heading']} tiêu đề · {counts['paragraph']} đoạn · {counts['table']} bảng · {counts['list']} danh sách")
-            st.text_area("Nội dung", st.session_state["ai_text"], height=200, label_visibility="collapsed")
+            st.markdown(f"""
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+              <span class="meta-badge-info">📌 {counts['heading']} tiêu đề</span>
+              <span class="meta-badge-info">📄 {counts['paragraph']} đoạn văn</span>
+              <span class="meta-badge-success">📊 {counts['table']} bảng dữ liệu</span>
+              <span class="meta-badge-warn">📋 {counts['list']} danh sách</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.text_area("Nội dung", st.session_state["ai_text"], height=220, label_visibility="collapsed")
 
 
 def render_scanner(settings):
@@ -230,9 +326,8 @@ def render_scanner(settings):
     st.session_state["scanner_last_source"] = source
     epoch = st.session_state["scanner_source_epoch"]
 
-    st.markdown('<div class="eyebrow">DOCUMENT STUDIO WORKSPACE</div>', unsafe_allow_html=True)
-    st.title("Quét tài liệu")
-    st.markdown('<div class="page-subtitle">Số hóa giấy tờ, nắn phẳng phối cảnh góc nghiêng và xuất bản scan chuyên nghiệp.</div>', unsafe_allow_html=True)
+    # Studio Hero Banner
+    _render_hero_banner()
 
     # 1. If sample source, load immediately
     if source == "Ảnh mẫu":
@@ -297,8 +392,19 @@ def render_scanner(settings):
 
     with left:
         with st.container(border=True):
-            st.markdown("### 01 · Ảnh gốc & căn chỉnh")
-            st.caption("Kéo 4 góc đỏ để nắn phối cảnh. Với trang cong hoặc mép uốn, điều chỉnh thêm các điểm neo màu cam.")
+            st.markdown("""
+            <div class="panel-header-rich">
+              <div class="panel-title-group">
+                <div class="panel-icon-badge icon-badge-blue">01</div>
+                <div>
+                  <div class="panel-title-text">Ảnh gốc & Căn chỉnh đường viền</div>
+                  <div style="font-size: 0.78rem; color: #64748B;">Kéo 4 góc đỏ để nắn phối cảnh, kéo điểm cam để uốn mép cong</div>
+                </div>
+              </div>
+              <span class="panel-badge">Interactive Canvas</span>
+            </div>
+            """, unsafe_allow_html=True)
+
             updated, updated_manual = render_quad_editor(
                 image_bgr=image,
                 corners=corners,
@@ -314,15 +420,26 @@ def render_scanner(settings):
                     st.session_state.pop(k, None)
                 corners, manual = updated, updated_manual
 
-            if st.button("Khôi phục đường viền tự động", use_container_width=True, disabled=not detected):
+            if st.button("🔄 Khôi phục đường viền tự động", use_container_width=True, disabled=not detected):
                 st.session_state["active_corners"] = result.corners.copy()
                 st.session_state["is_manual_mode"] = False
                 st.rerun()
 
     with right:
         with st.container(border=True):
-            st.markdown("### 02 · Bản scan")
-            st.caption("Xem trước kết quả nắn phẳng phối cảnh và tăng cường chất lượng nét chữ.")
+            st.markdown("""
+            <div class="panel-header-rich">
+              <div class="panel-title-group">
+                <div class="panel-icon-badge icon-badge-purple">02</div>
+                <div>
+                  <div class="panel-title-text">Bản scan chất lượng cao</div>
+                  <div style="font-size: 0.78rem; color: #64748B;">Làm phẳng phối cảnh và tăng cường độ đậm nét chữ</div>
+                </div>
+              </div>
+              <span class="panel-badge">High Resolution</span>
+            </div>
+            """, unsafe_allow_html=True)
+
             filter_mode = st.radio("Chế độ hình ảnh", FILTERS, horizontal=True, key="filter_mode", label_visibility="collapsed")
             contrast = st.slider("Độ đậm nét chữ", 1.0, 4.0, 2.2, 0.2, key="contrast_boost", help="Tăng cường độ đậm của nét mực văn bản.")
 
@@ -349,7 +466,7 @@ def render_scanner(settings):
 
             st.image(display, use_container_width=True)
             fh, fw = final_img.shape[:2]
-            st.caption(f"{fw} × {fh} px · {'Phối cảnh 4 góc' if manual else 'Coons Patch / tự động'}")
+            st.caption(f"📐 {fw} × {fh} px · Chế độ: {'Phối cảnh 4 góc thủ công' if manual else 'Nắn phẳng Coons Patch tự động'}")
 
     final_hash = image_digest(final_img)
     if st.session_state.get("final_image_hash") != final_hash:

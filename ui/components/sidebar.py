@@ -8,7 +8,7 @@ def render_sidebar():
         st.markdown("""
         <div class="brand-lockup">
           <div class="brand-mark">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width: 20px; height: 20px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="width: 22px; height: 22px;">
               <path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3M9 12h6M9 16h6M9 8h6"/>
             </svg>
           </div>
@@ -20,24 +20,32 @@ def render_sidebar():
         """, unsafe_allow_html=True)
 
         st.markdown('<div class="section-kicker">Chế độ làm việc</div>', unsafe_allow_html=True)
-        page = st.radio(
+        raw_page = st.radio(
             "Workspace",
-            ["Quét tài liệu", "Chuyển DOCX → PDF"],
+            ["📄 Quét tài liệu", "🔄 Chuyển DOCX → PDF"],
             label_visibility="collapsed"
         )
+        page = "Quét tài liệu" if "Quét tài liệu" in raw_page else "Chuyển DOCX → PDF"
         st.markdown("---")
 
         settings = {}
         if page == "Quét tài liệu":
             st.markdown('<div class="section-kicker">Nguồn tài liệu</div>', unsafe_allow_html=True)
-            settings["source"] = st.radio(
+            raw_source = st.radio(
                 "Nguồn ảnh",
-                ["Ảnh mẫu", "Tải ảnh lên", "Camera"],
+                ["🖼️ Ảnh mẫu", "📁 Tải ảnh lên", "📷 Camera"],
                 horizontal=False,
                 label_visibility="collapsed"
             )
 
-            # Contextual actions based on current active source
+            # Map raw source string with icons back to internal canonical keys
+            if "Ảnh mẫu" in raw_source:
+                settings["source"] = "Ảnh mẫu"
+            elif "Tải ảnh lên" in raw_source:
+                settings["source"] = "Tải ảnh lên"
+            else:
+                settings["source"] = "Camera"
+
             current_src = st.session_state.get("source_name", "")
             has_active_img = st.session_state.get("raw_cv_img") is not None
 
@@ -60,7 +68,11 @@ def render_sidebar():
 
             elif settings["source"] == "Camera":
                 if has_active_img and current_src == "camera_capture":
-                    st.caption("✅ Đã nạp ảnh từ camera vào bàn làm việc.")
+                    st.markdown("""
+                    <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; font-size: 0.8rem; color: #065F46; font-weight: 600;">
+                      ✅ Đã nạp ảnh camera vào bàn quét
+                    </div>
+                    """, unsafe_allow_html=True)
                     if st.button("📸 Chụp lại ảnh khác", use_container_width=True, type="secondary"):
                         clear_image()
                         st.session_state["scanner_source_epoch"] = st.session_state.get("scanner_source_epoch", 0) + 1
@@ -68,6 +80,11 @@ def render_sidebar():
 
             elif settings["source"] == "Tải ảnh lên":
                 if has_active_img and current_src not in ("sample1", "sample2", "sample3", "sample4", "sample5", "camera_capture"):
+                    st.markdown("""
+                    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; font-size: 0.8rem; color: #1E40AF; font-weight: 600;">
+                      📁 Đang hiển thị tệp tải lên
+                    </div>
+                    """, unsafe_allow_html=True)
                     if st.button("📁 Đổi sang ảnh khác", use_container_width=True, type="secondary"):
                         clear_image()
                         st.session_state["scanner_source_epoch"] = st.session_state.get("scanner_source_epoch", 0) + 1
@@ -77,13 +94,14 @@ def render_sidebar():
             st.markdown('<div class="section-kicker">Cấu hình AI Vision</div>', unsafe_allow_html=True)
             settings["model"] = st.selectbox(
                 "Mô hình Gemini",
-                ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+                ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"],
+                format_func=lambda m: f"{m} (Khuyên dùng)" if m == "gemini-2.5-flash" else m
             )
             settings["api_key"] = st.text_input(
                 "Google AI Studio API Key",
                 value=st.session_state.get("gemini_api_key_input", ""),
                 type="password",
-                help="Để trống nếu API key đã được cấu hình trong file .env hoặc biến môi trường"
+                help="Để trống nếu API key đã được cấu hình trong file .env hoặc biến môi trường hệ thống."
             )
             st.session_state["gemini_api_key_input"] = settings["api_key"]
             settings["lang"] = st.selectbox(
@@ -92,12 +110,12 @@ def render_sidebar():
                 format_func=lambda x: "Tiếng Việt (vi)" if x == "vi" else "English (en)"
             )
 
-            with st.expander("Tham số dò biên nâng cao"):
+            with st.expander("⚙️ Tham số dò biên nâng cao"):
                 labels = {
-                    "8 điểm · 4 góc + 4 trung điểm": 8,
-                    "12 điểm · Bám sát độ uốn cong": 12,
+                    "8 điểm · 4 góc + 4 trung điểm Coons Patch": 8,
+                    "12 điểm · Bám sát độ uốn cong cao": 12,
                     "6 điểm · 4 góc + 2 trung điểm": 6,
-                    "4 điểm · Tứ giác cơ bản": 4
+                    "4 điểm · Tứ giác phẳng cơ bản": 4
                 }
                 selected = st.selectbox("Số điểm neo", list(labels))
                 settings["num_points"] = labels[selected]
@@ -107,5 +125,20 @@ def render_sidebar():
                     help="Tăng cường tương phản cục bộ cho tài liệu bị sấp bóng hoặc ánh sáng yếu"
                 )
                 settings["max_dim"] = st.slider("Độ phân giải dò biên (px)", 600, 2000, 1200, 100)
+
+            # Rich System Info Strip in Sidebar
+            st.markdown("""
+            <div class="sidebar-info-card">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>Thuật toán nắn:</span> <strong>Coons Patch</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>Engine xử lý:</span> <strong>OpenCV 4.x</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>AI Vision:</span> <strong>Google Gemini</strong>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
 
         return page, settings
